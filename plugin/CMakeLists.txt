@@ -5,18 +5,18 @@ project(AudioPlugin VERSION 0.1.0)
 
 # Adding a directory with the library/application name as a subfolder of the
 # include folder is a good practice. It helps avoid name clashes later on.
-set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/YourPluginName")
+set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/E3Seq")
 
 # Adds a plugin target (that's basically what the Projucer does).
 juce_add_plugin(${PROJECT_NAME}
-    COMPANY_NAME MyCompany # change this
-    IS_SYNTH FALSE # may change this
-    NEEDS_MIDI_INPUT FALSE # may change this
-    NEEDS_MIDI_OUTPUT FALSE # may change this
-    PLUGIN_MANUFACTURER_CODE MCMP # change this
-    PLUGIN_CODE EXPL # change this
+    COMPANY_NAME KORGES # change this
+    IS_SYNTH TRUE # may change this
+    NEEDS_MIDI_INPUT TRUE # may change this
+    NEEDS_MIDI_OUTPUT TRUE # may change this
+    PLUGIN_MANUFACTURER_CODE KGES # change this
+    PLUGIN_CODE E3SQ # change this
     FORMATS Standalone VST3 # may change this
-    PRODUCT_NAME "YourPluginName" # change this
+    PRODUCT_NAME "E3Seq" # change this
 )
 
 # Sets the source files of the plugin project.

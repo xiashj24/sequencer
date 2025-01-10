@@ -1,4 +1,4 @@
-#include <YourPluginName/PluginProcessor.h>
+#include <E3Seq/PluginProcessor.h>
 #include <gtest/gtest.h>
 
 namespace audio_plugin_test {
