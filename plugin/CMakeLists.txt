@@ -19,7 +19,7 @@ juce_add_plugin(${PROJECT_NAME}
     FORMATS Standalone VST3 # may change this
     PRODUCT_NAME "E3Seq" # change this
     VST3_CATEGORIES Generator
-    IS_MIDI_EFFECT TRUE
+    # IS_MIDI_EFFECT TRUE
 )
 
 # Sets the source files of the plugin project.
@@ -67,4 +67,4 @@ endif()
 # In Visual Studio this command provides a nice grouping of source files in "filters".
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-juce_enable_copy_plugin_step(${PROJECT_NAME})
+# juce_enable_copy_plugin_step(${PROJECT_NAME})
