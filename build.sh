@@ -1,0 +1,1 @@
+cmake --build build --preset default --clean-first

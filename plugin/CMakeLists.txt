@@ -8,6 +8,7 @@ project(AudioPlugin VERSION 0.1.0)
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/E3Seq")
 
 # Adds a plugin target (that's basically what the Projucer does).
+# doc: https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md
 juce_add_plugin(${PROJECT_NAME}
     COMPANY_NAME KORGES # change this
     IS_SYNTH TRUE # may change this
@@ -17,6 +18,8 @@ juce_add_plugin(${PROJECT_NAME}
     PLUGIN_CODE E3SQ # change this
     FORMATS Standalone VST3 # may change this
     PRODUCT_NAME "E3Seq" # change this
+    VST3_CATEGORIES Generator
+    IS_MIDI_EFFECT TRUE
 )
 
 # Sets the source files of the plugin project.
@@ -63,3 +66,5 @@ endif()
 
 # In Visual Studio this command provides a nice grouping of source files in "filters".
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+juce_enable_copy_plugin_step(${PROJECT_NAME})
