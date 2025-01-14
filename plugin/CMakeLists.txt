@@ -67,4 +67,4 @@ endif()
 # In Visual Studio this command provides a nice grouping of source files in "filters".
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-# juce_enable_copy_plugin_step(${PROJECT_NAME})
+juce_enable_copy_plugin_step(${PROJECT_NAME})
