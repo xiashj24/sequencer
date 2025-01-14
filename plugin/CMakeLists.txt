@@ -19,7 +19,10 @@ juce_add_plugin(${PROJECT_NAME}
     FORMATS Standalone VST3 # may change this
     PRODUCT_NAME "E3Seq" # change this
     VST3_CATEGORIES Generator
-    # IS_MIDI_EFFECT TRUE
+    BLUETOOTH_PERMISSION_ENABLED FALSE
+    # VST_NUM_MIDI_INS 1
+    # VST_NUM_MIDI_OUTS 1
+    # IS_MIDI_EFFECT TRUE # somehow enabling this makes Live unable to open the VST3
 )
 
 # Sets the source files of the plugin project.
@@ -68,3 +71,8 @@ endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 juce_enable_copy_plugin_step(${PROJECT_NAME})
+
+add_custom_command(TARGET AudioPlugin_Standalone POST_BUILD
+    COMMAND open ${CMAKE_BINARY_DIR}/plugin/AudioPlugin_artefacts/Debug/Standalone/E3Seq.app
+    COMMENT "Opening E3Seq.app after build"
+)

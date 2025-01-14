@@ -1,6 +1,9 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_devices/juce_audio_devices.h>
+
+#include "E3Sequencer.h"
 
 namespace audio_plugin {
 class AudioPluginAudioProcessor : public juce::AudioProcessor {
@@ -35,7 +38,17 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
+  const juce::MidiMessage triggerNote(int noteNumber);
+
+  std::unique_ptr<juce::MidiInput> midiInput;
+  std::unique_ptr<juce::MidiOutput> midiOutput;
+
 private:
+
+  // MARK: member var
+  const int midiChannel = 1;
+  double startTime;
+
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };
 }  // namespace audio_plugin

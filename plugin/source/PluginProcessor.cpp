@@ -12,6 +12,21 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
       ) {
+  // MARK: initialization
+  midiOutput = juce::MidiOutput::openDevice(
+      juce::MidiOutput::getDefaultDevice().identifier);
+  startTime = juce::Time::getMillisecondCounterHiRes() * 0.001;
+}
+
+// MARK: Note On
+const juce::MidiMessage AudioPluginAudioProcessor::triggerNote(int noteNumber) {
+  auto message =
+      juce::MidiMessage::noteOn(midiChannel, noteNumber, (juce::uint8)100);
+  message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001 -
+                       startTime);
+  
+  midiOutput->sendMessageNow(message);
+  return message;
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -98,7 +113,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(
       layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
     return false;
 
-    // This checks if the input layout matches the output layout
+  // This checks if the input layout matches the output layout
 #if !JucePlugin_IsSynth
   if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
     return false;
@@ -110,7 +125,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(
 
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                              juce::MidiBuffer& midiMessages) {
-  juce::ignoreUnused(midiMessages);
+  // juce::ignoreUnused(midiMessages);
 
   juce::ScopedNoDenormals noDenormals;
   auto totalNumInputChannels = getTotalNumInputChannels();
@@ -136,6 +151,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::ignoreUnused(channelData);
     // ..do something to the data...
   }
+
+  // TODO: populate MIDI buffers
+  // is it automatically cleared after processingBlock()?
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const {
@@ -161,6 +179,7 @@ void AudioPluginAudioProcessor::setStateInformation(const void* data,
   // call.
   juce::ignoreUnused(data, sizeInBytes);
 }
+
 }  // namespace audio_plugin
 
 // This creates new instances of the plugin.
