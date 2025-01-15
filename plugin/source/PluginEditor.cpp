@@ -44,7 +44,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   // MARK: Initialization
   logMessage(juce::String::formatted("Samplerate: %d Hz", (int)processorRef.getSampleRate()));
   logMessage(juce::String::formatted("Block Size: %d samples", processorRef.getBlockSize()));
-  // logMessage("MIDI Out: " + processorRef.midiOutput->getName());
   // TODO: what happens when host changes samplerate/block size?
   setSize(1000, 500);
   setResizable(true, true);

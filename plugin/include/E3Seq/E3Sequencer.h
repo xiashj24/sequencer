@@ -1,8 +1,11 @@
 #pragma once
 
+// core sequencer API for Electribe 3 (and hopefully more synths)
 // copyright: Korg Inc.
 // created by Shijie Xia on 2025/1/14
+// note: platform specific APIs (e.g. JUCE) should not be used here
 
+// TODO: Doxygene documentation
 
 class E3Sequencer {
 public:
@@ -18,7 +21,9 @@ public:
     // so 1 micro step = 2 seconds / 384 = 5.208 ms for BPM 120
     // ideally tick interval should be shorter than 1/10 of a micro step (roughly over 2000Hz)
     // otherwise timing precision suffers
-    E3Sequencer(float tickTime) {}
+    E3Sequencer(float tickTime) {
+        juce::ignoreUnused(tickTime);
+    }
 
     // transport-related
     void Start();

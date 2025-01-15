@@ -23,7 +23,7 @@ private:
   juce::TextButton closedHiHatButton;
   juce::TextButton openHiHatButton;
   juce::TextEditor midiMessagesBox;
-
+  
   void logMessage(const juce::String& m) {
     midiMessagesBox.moveCaretToEnd();
     midiMessagesBox.insertTextAtCaret(m + juce::newLine);
