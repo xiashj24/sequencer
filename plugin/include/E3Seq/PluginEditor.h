@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include <juce_audio_utils/juce_audio_utils.h> // MidiKeyboard component
 
 namespace audio_plugin {
 
@@ -22,7 +23,10 @@ private:
   juce::TextButton snareDrumButton;
   juce::TextButton closedHiHatButton;
   juce::TextButton openHiHatButton;
+  juce::TextButton allNotesOffButton;
   juce::TextEditor midiMessagesBox;
+
+  juce::MidiKeyboardComponent onScreenKeyboard;
   
   void logMessage(const juce::String& m) {
     midiMessagesBox.moveCaretToEnd();

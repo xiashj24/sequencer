@@ -39,13 +39,15 @@ public:
   void setStateInformation(const void* data, int sizeInBytes) override;
 
   juce::MidiMessage triggerNote(int noteNumber);
+  juce::MidiMessage allNotesOff();
 
+  juce::MidiKeyboardState keyboardState;  // visible to the editor
 private:
   // MARK: member var
   const int midiChannel = 1;
+  E3Sequencer sequencer;
 
-  juce::MidiBuffer midiBuffer;
-  void addMidiMessageToBuffer(const juce::MidiMessage& message);
+  juce::MidiMessageCollector midiCollector;
   // std::unique_ptr<juce::MidiInput> midiInput;
   // std::unique_ptr<juce::MidiOutput> midiOutput;
 

@@ -4,25 +4,44 @@
 namespace audio_plugin {
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor(&p), processorRef(p) {
+    : AudioProcessorEditor(&p),
+      processorRef(p),
+      onScreenKeyboard(p.keyboardState,
+                       juce::MidiKeyboardComponent::horizontalKeyboard) {
   juce::ignoreUnused(processorRef);
 
   // MARK: GUI callbacks
+  addAndMakeVisible(onScreenKeyboard);
+
   addAndMakeVisible(bassDrumButton);
   bassDrumButton.setButtonText("Bass Drum (36)");
-  bassDrumButton.onClick = [this] { addMessageToList(processorRef.triggerNote(36)); };
+  bassDrumButton.onClick = [this] {
+    addMessageToList(processorRef.triggerNote(36));
+  };
 
   addAndMakeVisible(snareDrumButton);
   snareDrumButton.setButtonText("Snare Drum (38)");
-  snareDrumButton.onClick = [this] { addMessageToList(processorRef.triggerNote(38)); };
+  snareDrumButton.onClick = [this] {
+    addMessageToList(processorRef.triggerNote(38));
+  };
 
   addAndMakeVisible(closedHiHatButton);
   closedHiHatButton.setButtonText("Closed HH (42)");
-  closedHiHatButton.onClick = [this] { addMessageToList(processorRef.triggerNote(42)); };
+  closedHiHatButton.onClick = [this] {
+    addMessageToList(processorRef.triggerNote(42));
+  };
 
   addAndMakeVisible(openHiHatButton);
   openHiHatButton.setButtonText("Open HH (46)");
-  openHiHatButton.onClick = [this] { addMessageToList(processorRef.triggerNote(46)); };
+  openHiHatButton.onClick = [this] {
+    addMessageToList(processorRef.triggerNote(46));
+  };
+
+  addAndMakeVisible(allNotesOffButton);
+  allNotesOffButton.setButtonText("All Notes Off");
+  allNotesOffButton.onClick = [this] {
+    addMessageToList(processorRef.allNotesOff());
+  };
 
   addAndMakeVisible(midiMessagesBox);
   midiMessagesBox.setMultiLine(true);
@@ -42,8 +61,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   // editor's size to whatever you need it to be.
 
   // MARK: Initialization
-  logMessage(juce::String::formatted("Samplerate: %d Hz", (int)processorRef.getSampleRate()));
-  logMessage(juce::String::formatted("Block Size: %d samples", processorRef.getBlockSize()));
+  logMessage(juce::String::formatted("Samplerate: %d Hz",
+                                     (int)processorRef.getSampleRate()));
+  logMessage(juce::String::formatted("Block Size: %d samples",
+                                     processorRef.getBlockSize()));
   // TODO: what happens when host changes samplerate/block size?
   setSize(1000, 500);
   setResizable(true, true);
@@ -63,6 +84,8 @@ void AudioPluginAudioProcessorEditor::resized() {
   auto halfWidth = getWidth() / 2;
   auto buttonsBounds = getLocalBounds().withWidth(halfWidth).reduced(10);
 
+  onScreenKeyboard.setBounds(10, getHeight() - 90, getWidth() - 20, 80);
+
   bassDrumButton.setBounds(buttonsBounds.getX(), 10, buttonsBounds.getWidth(),
                            40);
   snareDrumButton.setBounds(buttonsBounds.getX(), 60, buttonsBounds.getWidth(),
@@ -71,8 +94,13 @@ void AudioPluginAudioProcessorEditor::resized() {
                               buttonsBounds.getWidth(), 40);
   openHiHatButton.setBounds(buttonsBounds.getX(), 160, buttonsBounds.getWidth(),
                             40);
-  midiMessagesBox.setBounds(
-      getLocalBounds().withWidth(halfWidth).withX(halfWidth).reduced(10));
+  allNotesOffButton.setBounds(buttonsBounds.getX(), 210,
+                              buttonsBounds.getWidth(), 40);
+  midiMessagesBox.setBounds(getLocalBounds()
+                                .withWidth(halfWidth)
+                                .withX(halfWidth)
+                                .reduced(10)
+                                .withTrimmedBottom(100));
 }
 
 }  // namespace audio_plugin
