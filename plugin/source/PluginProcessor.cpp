@@ -11,7 +11,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-      ) {
+      ) 
 
   // TODO: for Standalone, open up MIDI In/Out devices (low priority)
 }
@@ -107,7 +107,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
 
     // MARK: initialization
   midiCollector.reset(sampleRate);  // TODO: what if sample rate changes
-  sequencer.reset(samplesPerBlock / sampleRate);
+  sequencer.setTickRate((float)sampleRate / samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
@@ -172,6 +172,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // read MIDI input from MIDI buffer and program sequencer steps
 
   // ..sequencer logic here..
+  E3Sequencer::NoteEvent note_on, note_off;
+  sequencer.tick(&note_on, &note_on, nullptr);
 
   // populate midiCollector
 
