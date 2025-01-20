@@ -7,8 +7,8 @@
 
 // philosophy
 // platform-agonistic: JUCE API and std::vector should be avoided
-// flexiblility: should be usable for a lot of products
-// easy to tweak on the fly
+// flexiblility: usable for a lot of products
+// easy to tweak from user interface
 
 #pragma once
 
@@ -17,18 +17,20 @@
 // PARAMETERS
 
 // --- track parameters ---
-// Length: 1..16..16*8
+// Length: 1..16..128
 // Playback mode: forward/backward/random/bounce/brownian
 
 // --- step parameters ---
-// Note: 0..127 (note: below 20 is mostly unused)
-// Gate: 0..100%..16..TIE  // quantized to 1/16 in (0,1)
+// Note: 0..127
+// Gate: 0..100%..16..TIE  // quantized to 1/24 in (0,1)
 // Velocity: 0..127
 // Offset: 0..100%
 // Roll:  1/2/3/4 (Do we need more?)
-// Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
 // Probablity: 0..100%
 // Alternate: 1/2/3/4 (Do we need more?)
+
+// (do not implement for now, as this is a keyboard centric parameter)
+// Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
 
 #define STEP_SEQ_MAX_LENGTH 128  // as defined by the product specs
 #define STEP_SEQ_NUM_TRACKS 16   // as defined by the product specs
@@ -37,14 +39,14 @@
 #define DEFAULT_BPM 120
 
 #define RESOLUTION 24  // divide 1 step into 24 micro-steps
-// NoteOn and NoteOff events are quantized to the closest microsteps
+// NoteOn (and NoteOff?) events are quantized to the closest microsteps
 /*
-    by default, the timing resolution is a 1/384 of one bar
-    (or 1/24 of a quarter note, same as Elektron)
+  by default, the timing resolution is a 1/384 of one bar
+  (or 1/24 of a quarter note, same as Elektron)
 
-    so 1 micro step = 2 seconds / 384 = 5.208 ms for BPM 120
-    ideally tick interval should be shorter than 1/10 of a micro step (roughly
-    over 2000Hz), otherwise timing precision suffers
+  so 1 micro step = 2 seconds / 384 = 5.208 ms for BPM 120
+  ideally tick interval should be shorter than 1/10 of a micro step (ticking
+  rate over 2000Hz), otherwise timing precision suffers
 */
 
 #define DEFAULT_NOTE 84       // C5
@@ -74,14 +76,16 @@ public:
 
     // function-related variables
     bool enabled = false;
-    bool tie = false;
+    bool tie = false; // or use something like gate > MAX_GATE ?
   };
+
+  class Track;
 
   // MARK: NoteEvent
   struct NoteEvent {
     bool enabled;
     int note;
-    float velocity;
+    int velocity;
     int channel;
     float time_since_last_tick;
 
@@ -97,6 +101,13 @@ public:
           note(step.note),
           velocity(step.velocity),
           channel(1),
+          time_since_last_tick(0.f) {}
+    
+    NoteEvent(Track track, Step step)
+        : enabled(true),
+          note(step.note),
+          velocity(step.velocity),
+          channel(track.getChannel()),
           time_since_last_tick(0.f) {}
   };
 
@@ -115,10 +126,16 @@ public:
     void enable() { enabled_ = true; }  // need to be called before use
     void disable() { enabled_ = false; }
     void setChannel(int channel) { channel_ = channel; }
+    void setLength(int length) {
+      #ifdef JUCE_DEBUG
+      jassert(length > 0);
+      #endif
+      length_ = length;
+    }
     int getChannel() const { return channel_; }
-
     bool isEnabled() const { return enabled_; }
     int getLength() const { return length_; }
+
 
     Step& operator[](int index) {
 #ifdef JUCE_DEBUG
@@ -127,26 +144,26 @@ public:
       return steps_[index];
     }
 
-    // TODO: randomize, humanize, rotate, etc.
+    // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids, etc.)
 
   private:
     int channel_;  // MIDI channel
 
     // track parameters as seen by the user
     int length_;
-    [[maybe_unused]]PlayMode playMode_;
+    [[maybe_unused]] PlayMode playMode_; 
+    [[maybe_unused]] float swing; // TODO: implement swing
+    [[maybe_unused]] bool resync_to_longest_track;
 
     // function-related variables
     bool enabled_;
-
     Step steps_[STEP_SEQ_MAX_LENGTH];
   };
 
-  E3Sequencer(int bpm = DEFAULT_BPM) : bpm_(bpm), running_(false), time_(0.f) {
+  E3Sequencer(int bpm = DEFAULT_BPM) : bpm_(bpm), running_(false), time_(0.f), tickTime_(0.001f) {
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
       getTrack(i).setChannel(i + 1);
     }
-    setTickRate(1000.f);
   }
   // TODO: make this class copyable/movable?
   ~E3Sequencer() = default;
@@ -180,14 +197,14 @@ public:
   // TODO: API to export the sequencer data as some text format (JSON)
 
 private:
-  float tickTime_;
-
-  // seqencer meta data here
+  // seqencer parameters here
   int bpm_;
 
   // function-related variables
   bool running_;
   float time_;
+
+  float tickTime_;
 
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };

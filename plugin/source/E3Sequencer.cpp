@@ -6,8 +6,8 @@ void E3Sequencer::tick(NoteEvent* noteOn,
   if (!running_)
     return;
 
-  float step_time = 60.f / bpm_;
-  [[maybe_unused]]float micro_step_time = step_time / RESOLUTION;
+  float one_step_time = 60.f / bpm_;
+  [[maybe_unused]]float one_micro_step_time = one_step_time / RESOLUTION;
 
   // TODO: implement backward/bounce sequencing
   // this might be difficult since note length can extend well beyond one step
@@ -21,12 +21,11 @@ void E3Sequencer::tick(NoteEvent* noteOn,
         // [time, time + tickTime)
         auto step = track[i];
         if (step.enabled) {
-          auto note_on_time = ((float)i + step.offset) * step_time;
-          auto note_off_time = note_on_time + step.gate * step_time;
-          // TODO: timing quantization
-          if (note_on_time > time_ && note_on_time < time_ + tickTime_) {
-            NoteEvent note_on_event(step);
-            note_on_event.channel = track.getChannel();
+          auto note_on_time = ((float)i + step.offset) * one_step_time;
+          auto note_off_time = note_on_time + step.gate * one_step_time;
+          // TODO: noteOn timing quantization
+          if (note_on_time >= time_ && note_on_time < time_ + tickTime_) {
+            NoteEvent note_on_event(track, step);
             note_on_event.time_since_last_tick = note_on_time - time_;
 
             if (noteOn) {
@@ -35,8 +34,7 @@ void E3Sequencer::tick(NoteEvent* noteOn,
           }
 
           if (note_off_time > time_ && note_off_time < time_ + tickTime_) {
-            NoteEvent note_off_event(step);
-            note_off_event.channel = track.getChannel();
+            NoteEvent note_off_event(track, step);
             note_off_event.time_since_last_tick = note_off_time - time_;
 
             if (noteOff) {

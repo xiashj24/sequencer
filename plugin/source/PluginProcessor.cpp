@@ -11,9 +11,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-      ) 
-
-  // TODO: for Standalone, open up MIDI In/Out devices (low priority)
+      ) {
+  // MARK: sequencer programming
+  auto track_1 = sequencer_.getTrack(0);
+  track_1.enable();
+  track_1.setLength(16);
+  track_1[0].enabled = true;
+  track_1[4].enabled = true;
+  track_1[8].enabled = true;
+  track_1[12].enabled = true;
+  sequencer_.start();
 }
 
 // MARK: trigger note
@@ -24,20 +31,21 @@ juce::MidiMessage AudioPluginAudioProcessor::triggerNote(int noteNumber) {
   note_on.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
 
   // auto note_off =
-  //     juce::MidiMessage::noteOff(midiChannel, noteNumber, (juce::uint8)100); // support note off velocity?
+  //     juce::MidiMessage::noteOff(midiChannel, noteNumber, (juce::uint8)100);
+  //     // support note off velocity?
   // note_off.setTimeStamp(note_on_time + 1000);  // gate last 1 second
 
   // add to local MIDI buffer
-  midiCollector.addMessageToQueue(note_on);
-  // midiCollector.addMessageToQueue(note_off); // this doesn't work, seems like Juce only handles noteOff by callbacks
+  midiCollector_.addMessageToQueue(note_on);
+  // midiCollector.addMessageToQueue(note_off); // this doesn't work, seems like
+  // Juce only handles noteOff by callbacks
   return note_on;
 }
 
-juce::MidiMessage AudioPluginAudioProcessor::allNotesOff()
-{
+juce::MidiMessage AudioPluginAudioProcessor::allNotesOff() {
   auto message = juce::MidiMessage::allNotesOff(midiChannel);
   message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-  midiCollector.addMessageToQueue(message);
+  midiCollector_.addMessageToQueue(message);
   return message;
 }
 
@@ -105,9 +113,12 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
   // initialisation that you need..
   juce::ignoreUnused(sampleRate, samplesPerBlock);
 
-    // MARK: initialization
-  midiCollector.reset(sampleRate);  // TODO: what if sample rate changes
-  sequencer.setTickRate((float)sampleRate / samplesPerBlock);
+  // MARK: initialization
+  midiCollector_.reset(sampleRate);  // TODO: verify that this is called after
+                                     // sample rate changes in DAW
+  sequencer_.setTickRate((float)sampleRate /
+                         samplesPerBlock);  // tick once per audio block
+  sequencer_.setBpm(120);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
@@ -169,18 +180,32 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   }
 
   // MARK: process MIDI
-  // read MIDI input from MIDI buffer and program sequencer steps
+  // read MIDI input from MIDI buffer and program sequencer
 
   // ..sequencer logic here..
   E3Sequencer::NoteEvent note_on, note_off;
-  sequencer.tick(&note_on, &note_on, nullptr);
+  sequencer_.tick(&note_on, &note_off, nullptr);
 
-  // populate midiCollector
+  // add note event to midiBuffer_
+  seqMidiBuffer_.clear();
+  if (note_on.enabled) {
+    auto note_on_message = juce::MidiMessage::noteOn(
+        note_on.channel, note_on.note, (juce::uint8)note_on.velocity);
+    seqMidiBuffer_.addEvent(note_on_message, (int)(note_on.time_since_last_tick * getSampleRate()));
+  }
+
+  if (note_off.enabled)
+  {
+    auto note_off_message = juce::MidiMessage::noteOff(
+      note_off.channel, note_off.note, (juce::uint8)note_off.velocity);
+      seqMidiBuffer_.addEvent(note_off_message, (int)(note_off.time_since_last_tick * getSampleRate()));
+  }
 
   // overwrite MIDI buffer
-  midiMessages.clear();
-  midiCollector.removeNextBlockOfMessages(midiMessages, buffer.getNumSamples());
-  keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+  midiMessages.clear();  // do not use input MIDI messages
+  midiCollector_.removeNextBlockOfMessages(midiMessages, getBlockSize()); // live play
+  midiMessages.addEvents(seqMidiBuffer_, 0, getBlockSize(), 0);
+  keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const {
