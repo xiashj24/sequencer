@@ -76,7 +76,7 @@ public:
 
     // function-related variables
     bool enabled = false;
-    bool tie = false; // or use something like gate > MAX_GATE ?
+    bool tie = false;  // or use something like gate > MAX_GATE ?
   };
 
   class Track;
@@ -102,7 +102,7 @@ public:
           velocity(step.velocity),
           channel(1),
           time_since_last_tick(0.f) {}
-    
+
     NoteEvent(Track track, Step step)
         : enabled(true),
           note(step.note),
@@ -127,15 +127,14 @@ public:
     void disable() { enabled_ = false; }
     void setChannel(int channel) { channel_ = channel; }
     void setLength(int length) {
-      #ifdef JUCE_DEBUG
+#ifdef JUCE_DEBUG
       jassert(length > 0);
-      #endif
+#endif
       length_ = length;
     }
     int getChannel() const { return channel_; }
     bool isEnabled() const { return enabled_; }
     int getLength() const { return length_; }
-
 
     Step& operator[](int index) {
 #ifdef JUCE_DEBUG
@@ -144,15 +143,16 @@ public:
       return steps_[index];
     }
 
-    // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids, etc.)
+    // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids,
+    // etc.)
 
   private:
     int channel_;  // MIDI channel
 
     // track parameters as seen by the user
     int length_;
-    [[maybe_unused]] PlayMode playMode_; 
-    [[maybe_unused]] float swing; // TODO: implement swing
+    [[maybe_unused]] PlayMode playMode_;
+    [[maybe_unused]] float swing;  // TODO: implement swing
     [[maybe_unused]] bool resync_to_longest_track;
 
     // function-related variables
@@ -160,7 +160,8 @@ public:
     Step steps_[STEP_SEQ_MAX_LENGTH];
   };
 
-  E3Sequencer(int bpm = DEFAULT_BPM) : bpm_(bpm), running_(false), time_(0.f), tickTime_(0.001f) {
+  E3Sequencer(int bpm = DEFAULT_BPM)
+      : bpm_(bpm), running_(false), time_(0.f), tickTime_(0.001f) {
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
       getTrack(i).setChannel(i + 1);
     }

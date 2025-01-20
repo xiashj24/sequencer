@@ -13,7 +13,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
       ) {
   // MARK: sequencer programming
-  auto track_1 = sequencer_.getTrack(0);
+  E3Sequencer::Track& track_1 = sequencer_.getTrack(0);
   track_1.enable();
   track_1.setLength(16);
   track_1[0].enabled = true;
