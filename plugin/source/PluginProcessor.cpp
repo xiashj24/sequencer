@@ -15,12 +15,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
   // MARK: sequencer programming
   E3Sequencer::Track& track_1 = sequencer_.getTrack(0);
   track_1.enable();
+  track_1.setChannel(1);
   track_1.setLength(16);
   track_1[0].enabled = true;
   track_1[4].enabled = true;
   track_1[8].enabled = true;
   track_1[12].enabled = true;
-  sequencer_.start();
+
+  // sequencer_.start();
 }
 
 // MARK: trigger note
@@ -56,11 +58,12 @@ const juce::String AudioPluginAudioProcessor::getName() const {
 }
 
 bool AudioPluginAudioProcessor::acceptsMidi() const {
-#if JucePlugin_WantsMidiInput
+  // #if JucePlugin_WantsMidiInput
+  //   return true;
+  // #else
+  //   return false;
+  // #endif
   return true;
-#else
-  return false;
-#endif
 }
 
 bool AudioPluginAudioProcessor::producesMidi() const {
@@ -116,9 +119,9 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
   // MARK: initialization
   midiCollector_.reset(sampleRate);  // TODO: verify that this is called after
                                      // sample rate changes in DAW
-  sequencer_.setTickRate((float)sampleRate /
-                         samplesPerBlock);  // tick once per audio block
-  sequencer_.setBpm(120);
+  sequencer_.setTickRate(sampleRate /
+                         (double)samplesPerBlock);  // tick once per audio block
+  sequencer_.setBpm(120.0);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
@@ -182,29 +185,63 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // MARK: process MIDI
   // read MIDI input from MIDI buffer and program sequencer
 
+  midiMessages.clear();  // discard input MIDI messages
+  // generate MIDI start/stop/continue messages by querying DAW transport
+  // also set bpm
+  if (auto playHead = getPlayHead()) {
+    if (auto positionInfo = playHead->getPosition()) {
+      sequencer_.setBpm(positionInfo->getBpm().orFallback(120.0));
+      if (positionInfo->getIsPlaying()) {
+        if (!sequencer_.isRunning())
+          sequencer_.start();
+      } else {
+        if (sequencer_.isRunning())
+          sequencer_.stop();
+          // note: the host environment is responsible to send allNoteOff for all channels
+      }
+    }
+  }
+
+
+
+  // for (const auto metadata : midiMessages) {
+  //   auto message = metadata.getMessage();
+
+  //   if (message.isMidiStart()) {
+  //     sequencer_.start();
+  //   } else if (message.isMidiStop()) {
+  //     sequencer_.stop();
+  //   } else if (message.isMidiContinue()) {
+  //     sequencer_.resume();
+  //   }
+  // }
+
   // ..sequencer logic here..
   E3Sequencer::NoteEvent note_on, note_off;
   sequencer_.tick(&note_on, &note_off, nullptr);
 
   // add note event to midiBuffer_
   seqMidiBuffer_.clear();
+
   if (note_on.enabled) {
     auto note_on_message = juce::MidiMessage::noteOn(
         note_on.channel, note_on.note, (juce::uint8)note_on.velocity);
-    seqMidiBuffer_.addEvent(note_on_message, (int)(note_on.time_since_last_tick * getSampleRate()));
+    seqMidiBuffer_.addEvent(
+        note_on_message, (int)(note_on.time_since_last_tick * getSampleRate()));
   }
 
-  if (note_off.enabled)
-  {
+  if (note_off.enabled) {
     auto note_off_message = juce::MidiMessage::noteOff(
-      note_off.channel, note_off.note, (juce::uint8)note_off.velocity);
-      seqMidiBuffer_.addEvent(note_off_message, (int)(note_off.time_since_last_tick * getSampleRate()));
+        note_off.channel, note_off.note, (juce::uint8)note_off.velocity);
+    seqMidiBuffer_.addEvent(
+        note_off_message,
+        (int)(note_off.time_since_last_tick * getSampleRate()));
   }
 
   // overwrite MIDI buffer
-  midiMessages.clear();  // do not use input MIDI messages
-  midiCollector_.removeNextBlockOfMessages(midiMessages, getBlockSize()); // live play
-  midiMessages.addEvents(seqMidiBuffer_, 0, getBlockSize(), 0);
+  midiMessages.swapWith(seqMidiBuffer_);
+  midiCollector_.removeNextBlockOfMessages(midiMessages,
+                                           getBlockSize());  // live play
   keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
 }
 

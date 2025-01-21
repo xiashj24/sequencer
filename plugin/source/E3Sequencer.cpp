@@ -8,8 +8,8 @@ void E3Sequencer::tick(NoteEvent* noteOn,
   if (!running_)
     return;
 
-  float one_step_time = 60.f / bpm_;
-  [[maybe_unused]] float one_micro_step_time = one_step_time / RESOLUTION;
+  double one_step_time = 60.0 / bpm_ / 4.0; // TODO: implement time signature (refer to JUCE documentation)
+  [[maybe_unused]] double one_micro_step_time = one_step_time / RESOLUTION;
 
   // TODO: implement backward/bounce sequencing
   // this might be difficult since note length can extend well beyond one step
@@ -19,16 +19,16 @@ void E3Sequencer::tick(NoteEvent* noteOn,
     if (track.isEnabled()) {
       // for all steps in the track (because steps can last very long)
       auto track_loop_time = track.getLength() * one_step_time;
-      auto local_time = std::fmodf(time_, track_loop_time);
+      auto local_time = std::fmod(time_, track_loop_time);
       for (int i = 0; i < track.getLength(); i++) {
         // generate a NoteEvent if NoteOn/NoteOff time lies in
         // [time, time + tickTime)
         auto step = track[i];
         if (step.enabled) {
           auto note_on_time =
-              ((float)i + step.offset) * one_step_time +
+              ((double)i + step.offset) * one_step_time +
               tickTime_;  // add 1-tick delay because for the second loop local time
-                      // will not start exactly from 0. Hopefully this will not cause problems (such as missing noteOff?)
+                      // will not start exactly from 0. Hopefully this will not cause problems (such as mis_sing noteOff?)
           auto note_off_time = note_on_time + step.gate * one_step_time;
           // TODO: noteOn timing quantization
           if (note_on_time >= local_time &&

@@ -18,8 +18,7 @@ juce_add_plugin(${PROJECT_NAME}
     PLUGIN_CODE E3SQ # change this
     FORMATS Standalone VST3 # may change this
     PRODUCT_NAME "E3Seq" # change this
-    VST3_CATEGORIES Generator
-    BLUETOOTH_PERMISSION_ENABLED FALSE
+    # VST3_CATEGORIES Generator
     # VST_NUM_MIDI_INS 1
     # VST_NUM_MIDI_OUTS 1
     # IS_MIDI_EFFECT TRUE # somehow enabling this makes Live unable to open the VST3

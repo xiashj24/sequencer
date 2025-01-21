@@ -64,14 +64,14 @@ public:
   struct Step {
     // step parameters as seen by the user
     int note = DEFAULT_NOTE;
-    float gate = DEFAULT_GATE;  // note: gate can be greater than 1 but should
-                                // be smaller than track length
+    double gate = DEFAULT_GATE;  // note: gate can be greater than 1 but should
+                                 // be smaller than track length
     int velocity = DEFAULT_VELOCITY;
-    float offset = 0.f;
+    double offset = 0.0;
 
-    float pitchbend = 0.f;
+    double pitchbend = 0.0;
     int roll = 1;
-    float probability = 1.f;
+    double probability = 1.0;
     int alternate = 1;
 
     // function-related variables
@@ -87,28 +87,28 @@ public:
     int note;
     int velocity;
     int channel;
-    float time_since_last_tick;
+    double time_since_last_tick;
 
     NoteEvent()
         : enabled(false),
           note(DEFAULT_NOTE),
           velocity(DEFAULT_VELOCITY),
           channel(1),
-          time_since_last_tick(0.f) {}
+          time_since_last_tick(0.0) {}
 
     NoteEvent(Step step)
         : enabled(true),
           note(step.note),
           velocity(step.velocity),
           channel(1),
-          time_since_last_tick(0.f) {}
+          time_since_last_tick(0.0) {}
 
     NoteEvent(Track track, Step step)
         : enabled(true),
           note(step.note),
           velocity(step.velocity),
           channel(track.getChannel()),
-          time_since_last_tick(0.f) {}
+          time_since_last_tick(0.0) {}
   };
 
   // MARK: Track
@@ -152,7 +152,7 @@ public:
     // track parameters as seen by the user
     int length_;
     [[maybe_unused]] PlayMode playMode_;
-    [[maybe_unused]] float swing;  // TODO: implement swing
+    [[maybe_unused]] double swing;  // TODO: implement swing
     [[maybe_unused]] bool resync_to_longest_track;
 
     // function-related variables
@@ -161,7 +161,7 @@ public:
   };
 
   E3Sequencer(int bpm = DEFAULT_BPM)
-      : bpm_(bpm), running_(false), time_(0.f), tickTime_(0.001f) {
+      : bpm_(bpm), running_(false), time_(0.0), tickTime_(0.001) {
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
       getTrack(i).setChannel(i + 1);
     }
@@ -176,16 +176,18 @@ public:
     samples and ticking once per audio processing block the tick rate is 48k/64
     = 750
   */
-  void setTickRate(float tickRate) { tickTime_ = 1.f / tickRate; }
+  void setTickRate(double tickRate) { tickTime_ = 1.0 / tickRate; }
 
   // transport-related
   void start() {
     running_ = true;
-    time_ = 0.f;
+    time_ = 0.0;
   }
   void stop() { running_ = false; }
   void resume() { running_ = true; }
-  void setBpm(int BPM) { bpm_ = BPM; }
+  void setBpm(double BPM) { bpm_ = BPM; }
+
+  bool isRunning() const { return running_; }
 
   // sequence editing functions
   // TODO: provide more high level functions
@@ -199,13 +201,13 @@ public:
 
 private:
   // seqencer parameters here
-  int bpm_;
+  double bpm_;
 
   // function-related variables
   bool running_;
-  float time_;
+  double time_;
 
-  float tickTime_;
+  double tickTime_;
 
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };
