@@ -1,4 +1,4 @@
-#include "E3Seq/E3Sequencer.h"
+﻿#include "E3Seq/E3Sequencer.h"
 
 #include <cmath>
 
