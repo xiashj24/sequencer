@@ -71,15 +71,3 @@ endif()
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 juce_enable_copy_plugin_step(${PROJECT_NAME})
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_custom_command(TARGET AudioPlugin_Standalone POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E start "" "${CMAKE_BINARY_DIR}/plugin/AudioPlugin_artefacts/Debug/Standalone/E3Seq.exe"
-        COMMENT "Opening E3Seq.exe after build"
-    )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")  # macOS
-    add_custom_command(TARGET AudioPlugin_Standalone POST_BUILD
-        COMMAND open "${CMAKE_BINARY_DIR}/plugin/AudioPlugin_artefacts/Debug/Standalone/E3Seq.app"
-        COMMENT "Opening E3Seq.app after build"
-    )
-endif()

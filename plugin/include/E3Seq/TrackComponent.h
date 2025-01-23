@@ -142,7 +142,7 @@ public:
 private:
   E3Sequencer& sequencerRef;
   int trackNumber_;
-  bool collapsed;
+  [[maybe_unused]] bool collapsed;
 
   juce::TextButton trackCollapseButton;
   juce::Label noteLabel;

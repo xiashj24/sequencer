@@ -184,8 +184,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   midiMessages.clear();  // discard input MIDI messages
   // generate MIDI start/stop/continue messages by querying DAW transport
   // also set bpm
-  if (auto playHead = getPlayHead()) {
-    if (auto positionInfo = playHead->getPosition()) {
+  if (auto dawPlayHead = getPlayHead()) {
+    if (auto positionInfo = dawPlayHead->getPosition()) {
       sequencer_.setBpm(positionInfo->getBpm().orFallback(120.0));
       if (positionInfo->getIsPlaying()) {
         if (!sequencer_.isRunning())
@@ -197,8 +197,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
       }
     }
   }
-
-
 
   // for (const auto metadata : midiMessages) {
   //   auto message = metadata.getMessage();
