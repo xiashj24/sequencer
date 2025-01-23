@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "PluginProcessor.h"
 #include <juce_audio_utils/juce_audio_utils.h> // MidiKeyboard component

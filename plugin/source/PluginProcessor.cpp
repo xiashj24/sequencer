@@ -1,4 +1,4 @@
-﻿#include "E3Seq/PluginProcessor.h"
+#include "E3Seq/PluginProcessor.h"
 #include "E3Seq/PluginEditor.h"
 
 namespace audio_plugin {
