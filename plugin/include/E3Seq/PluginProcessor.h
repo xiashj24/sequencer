@@ -41,16 +41,19 @@ public:
   juce::MidiMessage triggerNote(int noteNumber);
   juce::MidiMessage allNotesOff();
 
+  E3Sequencer& getSequencer() { return sequencer_; }
+
   juce::MidiKeyboardState keyboardState;  // visible to the editor
 private:
   // MARK: member var
   const int midiChannel = 1;
+
   E3Sequencer sequencer_;
 
   juce::MidiMessageCollector midiCollector_;
   juce::MidiBuffer seqMidiBuffer_;
-  // std::unique_ptr<juce::MidiInput> midiInput; // TODO: implement MIDI input via MidiMessageCollector
-  // std::unique_ptr<juce::MidiOutput> midiOutput;
+  // std::unique_ptr<juce::MidiInput> midiInput; // TODO: implement MIDI input
+  // via MidiMessageCollector std::unique_ptr<juce::MidiOutput> midiOutput;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

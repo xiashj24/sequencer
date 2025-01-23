@@ -32,8 +32,10 @@
 // (do not implement for now, as this is a keyboard centric parameter)
 // Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
 
-#define STEP_SEQ_MAX_LENGTH 128  // as defined by the product specs
-#define STEP_SEQ_NUM_TRACKS 16   // as defined by the product specs
+#define STEP_SEQ_MAX_LENGTH \
+  16  // as defined by the product specs, set to 16 for now 
+      // TODO: support UI page switching and max length 128
+#define STEP_SEQ_NUM_TRACKS 16  // as defined by the product specs
 
 #define STEP_SEQ_DEFAULT_LENGTH 16
 #define DEFAULT_BPM 120
@@ -49,8 +51,8 @@
   rate over 2000Hz), otherwise timing precision suffers
 */
 
-#define DEFAULT_NOTE 84       // C5
-#define DEFAULT_VELOCITY 100  // MAX 127
+#define DEFAULT_NOTE 72       // C4
+#define DEFAULT_VELOCITY 100  // 1..127, 0 is the same as NoteOff
 #define DEFAULT_GATE 0.75
 
 // TODO: add example code
@@ -69,7 +71,7 @@ public:
     int velocity = DEFAULT_VELOCITY;
     double offset = 0.0;
 
-    double pitchbend = 0.0;
+    // double pitchbend = 0.0;
     int roll = 1;
     double probability = 1.0;
     int alternate = 1;
@@ -123,8 +125,7 @@ public:
           PlayMode mode = PlayMode::Forward)
         : channel_(channel), length_(len), playMode_(mode), enabled_(false) {}
 
-    void enable() { enabled_ = true; }  // need to be called before use
-    void disable() { enabled_ = false; }
+    void setEnabled(bool enabled) { enabled_ = enabled; }  // need to be called before use
     void setChannel(int channel) { channel_ = channel; }
     void setLength(int length) {
 #ifdef JUCE_DEBUG

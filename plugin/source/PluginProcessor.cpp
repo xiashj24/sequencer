@@ -14,13 +14,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
       ) {
   // MARK: sequencer programming
   E3Sequencer::Track& track_1 = sequencer_.getTrack(0);
-  track_1.enable();
+  track_1.setEnabled(true); // TODO: ennable button
   track_1.setChannel(1);
-  track_1.setLength(16);
-  track_1[0].enabled = true;
-  track_1[4].enabled = true;
-  track_1[8].enabled = true;
-  track_1[12].enabled = true;
+  track_1.setLength(16);  // TODO: the UI should set the length
 
   // sequencer_.start();
 }
