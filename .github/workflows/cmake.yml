@@ -52,12 +52,12 @@ jobs:
 
     - name: Package Build Artifacts
       run: |
-        mkdir -p ${{ github.workspace }}/artifacts
-        cp -r ${{ github.workspace }}/build/* ${{ github.workspace }}/artifacts/
+        mkdir -p ${{github.workspace}}/artifacts
+        cp -r ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/*  ${{ github.workspace }}/artifacts/
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build-output-${{ matrix.os }}-${{ matrix.build_type }}
-        path: ${{ github.workspace }}/artifacts
-        retention-days: 30  # Optional: How long to keep artifacts (default is 30 days)
+        name: ${{matrix.os}}-${{ matrix.build_type }}
+        path: ${{github.workspace}}/artifacts
+        retention-days: 30
