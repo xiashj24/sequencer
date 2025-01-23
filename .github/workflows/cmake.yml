@@ -10,8 +10,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-14, windows-latest]
-        build_type: [Debug, Release]
+        os: [macos-15, windows-latest]
+        build_type: [Release]
 
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
@@ -20,10 +20,10 @@ jobs:
 
     steps:
     - name: List Xcode installations
-      if: matrix.os == 'macos-14'
+      if: matrix.os == 'macos-15'
       run: sudo ls -1 /Applications | grep "Xcode"
     - name: Select Xcode 16.0
-      if: matrix.os == 'macos-14'
+      if: matrix.os == 'macos-15'
       run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
     - uses: actions/checkout@v4
 

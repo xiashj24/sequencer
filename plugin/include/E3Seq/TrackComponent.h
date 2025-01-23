@@ -97,7 +97,7 @@ public:
       offsetKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       offsetKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      offsetKnobs[i].setRange(-0.5, 0.5, 0.01);
+      offsetKnobs[i].setRange(-0.5, 0.49, 0.01);
       offsetKnobs[i].setValue(0.0);
 
       offsetKnobs[i].onValueChange = [this, i] {
