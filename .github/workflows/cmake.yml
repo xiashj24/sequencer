@@ -58,10 +58,9 @@ jobs:
     - name: Add Remove Quarantine Script
       if: matrix.os == 'macos-15'
       run: |
-          SCRIPT_NAME="${{github.workspace}}/artifacts/remove_quarantine.command"
+          SCRIPT_NAME="${{github.workspace}}/artifacts/remove_quarantine.sh"
           echo '#!/bin/bash' > $SCRIPT_NAME
           echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
-          chmod +x $SCRIPT_NAME
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
