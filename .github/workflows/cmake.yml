@@ -56,10 +56,11 @@ jobs:
         cp -r ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/*  ${{ github.workspace }}/artifacts/
 
     - name: Add Remove Quarantine Script
+      if: matrix.os == 'macos-15'
       run: |
-          SCRIPT_NAME="${{github.workspace}}/artifacts/remove_quarantine.sh"
+          SCRIPT_NAME="${{github.workspace}}/artifacts/remove_quarantine.command"
           echo '#!/bin/bash' > $SCRIPT_NAME
-          echo 'xattr -r -d com.apple.quarantine ./macos-15-Release' >> $SCRIPT_NAME
+          echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
           chmod +x $SCRIPT_NAME
 
     - name: Upload Build Artifacts
