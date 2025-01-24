@@ -54,14 +54,12 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/artifacts
         cp -r ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/*  ${{ github.workspace }}/artifacts/
-
-    - name: Remove macOS Quarantine Attribute
-      if: matrix.os == 'macos-15'
-      run: xattr -r -d com.apple.quarantine ${{github.workspace}}/artifacts
+        cd ${{github.workspace}}
+        tar -czf artifacts_${{matrix.os}}_${{matrix.build_type}}.tar.gz artifacts
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.os}}-${{ matrix.build_type }}
-        path: ${{github.workspace}}/artifacts
+        path: ${{github.workspace}}/artifacts_${{matrix.os}}_${{matrix.build_type}}.tar.gz
         retention-days: 30
