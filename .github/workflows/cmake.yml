@@ -54,7 +54,6 @@ jobs:
       if: matrix.os == 'macos-15'
       run: |
           SCRIPT_NAME="${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/remove_quarantine.sh"
-          echo '#!/bin/bash' > $SCRIPT_NAME
           echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
 
     - name: Upload Build Artifacts
