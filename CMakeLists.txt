@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 # Downloads CPM if not already downloaded. CPM is an easy-to-use package manager nicely integrated with CMake.
-include(cmake/cpm.cmake)
+include(cmake/get_cpm.cmake)
 
 # This commands downloads AND configures JUCE. It sets up some variables, like JUCE_SOURCE_DIR.
 CPMAddPackage(
