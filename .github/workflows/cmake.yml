@@ -54,10 +54,15 @@ jobs:
       run: |
         mkdir -p ${{github.workspace}}/artifacts
         cp -r ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/*  ${{ github.workspace }}/artifacts/
+    
+    - name: Compress Artifacts into a Zip
+      run: |
+        cd ${{github.workspace}}
+        zip -r artifacts_${{matrix.os}}_${{matrix.build_type}}.zip artifacts
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.os}}-${{ matrix.build_type }}
-        path: ${{github.workspace}}/artifacts
+        path: ${{github.workspace}}/artifacts_${{matrix.os}}_${{matrix.build_type}}.zip
         retention-days: 30
