@@ -50,21 +50,16 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{ matrix.build_type }}
 
-    - name: Package Build Artifacts
-      run: |
-        mkdir -p ${{github.workspace}}/artifacts
-        cp -r ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/*  ${{ github.workspace }}/artifacts/
-
     - name: Add Remove Quarantine Script
       if: matrix.os == 'macos-15'
       run: |
-          SCRIPT_NAME="${{github.workspace}}/artifacts/remove_quarantine.sh"
+          SCRIPT_NAME="${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/remove_quarantine.sh"
           echo '#!/bin/bash' > $SCRIPT_NAME
           echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{matrix.os}}-${{ matrix.build_type }}
-        path: ${{github.workspace}}/artifacts
+        name: ${{matrix.os}}-${{matrix.build_type}}
+        path: ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}
         retention-days: 30
