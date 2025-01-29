@@ -44,7 +44,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
-    startButton.setButtonText(juce::String::fromUTF8("Start ▶"));
+    startButton.setButtonText(juce::String::fromUTF8("Start 🎵"));
     startButton.onClick = [this] { processorRef.getSequencer().start(); };
     addAndMakeVisible(startButton);
 
