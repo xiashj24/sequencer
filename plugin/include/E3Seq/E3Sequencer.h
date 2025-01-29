@@ -35,7 +35,7 @@
 #define STEP_SEQ_MAX_LENGTH \
   16  // as defined by the product specs, set to 16 for now 
       // TODO: support UI page switching and max length 128
-#define STEP_SEQ_NUM_TRACKS 16  // as defined by the product specs
+#define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
 
 #define STEP_SEQ_DEFAULT_LENGTH 16
 #define DEFAULT_BPM 120
@@ -123,7 +123,7 @@ public:
     Track(int channel = 1,
           int len = STEP_SEQ_DEFAULT_LENGTH,
           PlayMode mode = PlayMode::Forward)
-        : channel_(channel), length_(len), playMode_(mode), enabled_(false) {}
+        : channel_(channel), length_(len), playMode_(mode), enabled_(true) {}
 
     void setEnabled(bool enabled) { enabled_ = enabled; }  // need to be called before use
     void setChannel(int channel) { channel_ = channel; }
@@ -163,7 +163,7 @@ public:
 
   E3Sequencer(int bpm = DEFAULT_BPM)
       : bpm_(bpm), running_(false), time_(0.0), tickTime_(0.001) {
-    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
+    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
       getTrack(i).setChannel(i + 1);
     }
   }

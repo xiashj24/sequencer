@@ -12,39 +12,19 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
       ) {
-  // MARK: sequencer programming
-  E3Sequencer::Track& track_1 = sequencer_.getTrack(0);
-  track_1.setEnabled(true); // TODO: ennable button
-  track_1.setChannel(1);
-  track_1.setLength(16);  // TODO: the UI should set the length
-
-  // sequencer_.start();
+  // create virtual MIDI port
+  virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
+  if (virtualMidiOut) {
+    virtualMidiOut->startBackgroundThread();
+  }
 }
 
-// MARK: trigger note
-juce::MidiMessage AudioPluginAudioProcessor::triggerNote(int noteNumber) {
-  // construct MIDI messages
-  auto note_on =
-      juce::MidiMessage::noteOn(midiChannel, noteNumber, (juce::uint8)100);
-  note_on.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-
-  // auto note_off =
-  //     juce::MidiMessage::noteOff(midiChannel, noteNumber, (juce::uint8)100);
-  //     // support note off velocity?
-  // note_off.setTimeStamp(note_on_time + 1000);  // gate last 1 second
-
-  // add to local MIDI buffer
-  midiCollector_.addMessageToQueue(note_on);
-  // midiCollector.addMessageToQueue(note_off); // this doesn't work, seems like
-  // Juce only handles noteOff by callbacks
-  return note_on;
-}
-
-juce::MidiMessage AudioPluginAudioProcessor::allNotesOff() {
-  auto message = juce::MidiMessage::allNotesOff(midiChannel);
-  message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-  midiCollector_.addMessageToQueue(message);
-  return message;
+void AudioPluginAudioProcessor::allNotesOff() {
+  for (int i = 0; i < 16; i++) {
+    auto message = juce::MidiMessage::allNotesOff(i + 1);
+    message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
+    midiCollector_.addMessageToQueue(message);
+  }
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
@@ -117,7 +97,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
                                      // sample rate changes in DAW
   sequencer_.setTickRate(sampleRate /
                          (double)samplesPerBlock);  // tick once per audio block
-  sequencer_.setBpm(120.0);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
@@ -181,34 +160,39 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // MARK: process MIDI
   // read MIDI input from MIDI buffer and program sequencer
 
-  midiMessages.clear();  // discard input MIDI messages
-  // generate MIDI start/stop/continue messages by querying DAW transport
-  // also set bpm
-  if (auto dawPlayHead = getPlayHead()) {
-    if (auto positionInfo = dawPlayHead->getPosition()) {
-      sequencer_.setBpm(positionInfo->getBpm().orFallback(120.0));
-      if (positionInfo->getIsPlaying()) {
-        if (!sequencer_.isRunning())
-          sequencer_.start();
-      } else {
-        if (sequencer_.isRunning())
-          sequencer_.stop();
-          // note: the host environment is responsible to send allNoteOff for all channels
-      }
+  // receive MIDI start/stop/continue messages
+  for (const auto metadata : midiMessages) {
+    auto message = metadata.getMessage();
+
+    if (message.isMidiStart()) {
+      sequencer_.start();
+    } else if (message.isMidiStop()) {
+      sequencer_.stop();
+    } else if (message.isMidiContinue()) {
+      sequencer_.resume();
     }
   }
 
-  // for (const auto metadata : midiMessages) {
-  //   auto message = metadata.getMessage();
-
-  //   if (message.isMidiStart()) {
-  //     sequencer_.start();
-  //   } else if (message.isMidiStop()) {
-  //     sequencer_.stop();
-  //   } else if (message.isMidiContinue()) {
-  //     sequencer_.resume();
-  //   }
-  // }
+  midiMessages.clear();  // discard input MIDI messages
+  // generate MIDI start/stop/continue messages by querying DAW transport
+  // also set bpm
+  if (this->wrapperType ==
+      juce::AudioProcessor::WrapperType::wrapperType_VST3) {
+    if (auto dawPlayHead = getPlayHead()) {
+      if (auto positionInfo = dawPlayHead->getPosition()) {
+        sequencer_.setBpm(positionInfo->getBpm().orFallback(120.0));
+        if (positionInfo->getIsPlaying()) {
+          if (!sequencer_.isRunning())
+            sequencer_.start();
+        } else {
+          if (sequencer_.isRunning())
+            sequencer_.stop();
+          // note: the host environment is responsible to send allNoteOff for
+          // all channels
+        }
+      }
+    }
+  }
 
   // ..sequencer logic here..
   E3Sequencer::NoteEvent note_on, note_off;
@@ -237,6 +221,13 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   midiCollector_.removeNextBlockOfMessages(midiMessages,
                                            getBlockSize());  // live play
   keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
+
+  // send the same MIDI messages to virtual MIDI out
+  if (virtualMidiOut) {
+    virtualMidiOut->sendBlockOfMessages(
+        midiMessages, juce::Time::getMillisecondCounterHiRes(),
+        getSampleRate());
+  }
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const {

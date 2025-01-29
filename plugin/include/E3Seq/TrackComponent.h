@@ -13,14 +13,20 @@ namespace audio_plugin {
 class TrackComponent : public juce::Component {
 public:
   TrackComponent(AudioPluginAudioProcessor& p, int trackNumber)
-      : sequencerRef(p.getSequencer()), trackNumber_(trackNumber), collapsed(true) {
+      : sequencerRef(p.getSequencer()), trackNumber_(trackNumber) {
     // look and feel
-
     // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
-    // step buttons
-    trackCollapseButton.setButtonText("Track " + juce::String(trackNumber) + " ▶");
-    addAndMakeVisible(trackCollapseButton);
 
+    setCollapsed(true);
+    addAndMakeVisible(trackCollapseButton);
+    trackCollapseButton.onClick = [this] {
+      toggleCollapsed();
+      if (auto* parent = findParentComponentOfClass<juce::Component>()) {
+        parent->resized();
+      }
+    };
+
+    // step buttons
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
       stepButtons[i].setButtonText(juce::String(i + 1));
       stepButtons[i].setClickingTogglesState(true);
@@ -50,7 +56,6 @@ public:
         sequencerRef.getTrack(trackNumber_)[i].note =
             (int)noteKnobs[i].getValue();
       };
-
       addAndMakeVisible(noteKnobs[i]);
     }
 
@@ -104,14 +109,10 @@ public:
         sequencerRef.getTrack(trackNumber_)[i].offset =
             offsetKnobs[i].getValue();
       };  // bug: step 1 minus offset don't work
-
       addAndMakeVisible(offsetKnobs[i]);
     }
 
     // overall component size
-    setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
-                STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
-            STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4);
   }
 
   void resized() override {
@@ -139,10 +140,29 @@ public:
     }
   }
 
+  void toggleCollapsed() { setCollapsed(!collapsed_); }
+
 private:
   E3Sequencer& sequencerRef;
   int trackNumber_;
-  [[maybe_unused]] bool collapsed;
+  bool collapsed_;
+
+  void setCollapsed(bool collapsed) {
+    collapsed_ = collapsed;
+    if (collapsed) {
+      setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
+                  STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
+              STEP_BUTTON_HEIGHT);
+      trackCollapseButton.setButtonText("Track " +
+                                        juce::String(trackNumber_ + 1) + " ▶");
+    } else {
+      setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
+                  STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
+              STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4);
+      trackCollapseButton.setButtonText("Track " +
+                                        juce::String(trackNumber_ + 1) + " ▼");
+    }
+  }
 
   juce::TextButton trackCollapseButton;
   juce::Label noteLabel;

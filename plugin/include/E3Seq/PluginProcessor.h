@@ -38,20 +38,18 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  juce::MidiMessage triggerNote(int noteNumber);
-  juce::MidiMessage allNotesOff();
-
+  void allNotesOff();
+  
   E3Sequencer& getSequencer() { return sequencer_; }
 
   juce::MidiKeyboardState keyboardState;  // visible to the editor
 private:
-  // MARK: member var
-  const int midiChannel = 1;
-
   E3Sequencer sequencer_;
 
-  juce::MidiMessageCollector midiCollector_;
+  juce::MidiMessageCollector midiCollector_; // for generating MIDI messages via GUI
   juce::MidiBuffer seqMidiBuffer_;
+
+  std::unique_ptr<juce::MidiOutput> virtualMidiOut;
   // std::unique_ptr<juce::MidiInput> midiInput; // TODO: implement MIDI input
   // via MidiMessageCollector std::unique_ptr<juce::MidiOutput> midiOutput;
 

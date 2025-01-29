@@ -1,7 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include <juce_audio_utils/juce_audio_utils.h> // MidiKeyboard component
+#include <juce_audio_utils/juce_audio_utils.h>  // MidiKeyboard component
 #include "TrackComponent.h"
 
 // TODO: add version display
@@ -16,16 +16,41 @@ public:
   void paint(juce::Graphics&) override;
   void resized() override;
 
+  bool keyPressed(const juce::KeyPress& key) override {
+    if (key == juce::KeyPress::spaceKey) {
+      auto& seq = processorRef.getSequencer();
+      if (seq.isRunning()) {
+        seq.stop();
+      } else {
+        seq.resume();  // or start?
+      }
+      return true;  // Key handled
+    }
+    return false;  // Pass key event to parent
+  }
+
 private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
   AudioPluginAudioProcessor& processorRef;
 
   // GUI elements
-  TrackComponent trackOne;
+  TrackComponent tracks[8];
+
+  juce::TextButton startButton;
+  juce::TextButton stopButton;
+  juce::TextButton continueButton;
+
+  juce::TextButton allNotesOffButton;
+
+  juce::Label bpmLabel;
+  juce::Slider bpmSlider;
+
+  juce::Label keyboardMidiChannelLabel;
+  juce::Slider keyboardMidiChannelSlider;
 
   juce::MidiKeyboardComponent onScreenKeyboard;
-  
+
   // void logMessage(const juce::String& m) {
   //   midiMessagesBox.moveCaretToEnd();
   //   midiMessagesBox.insertTextAtCaret(m + juce::newLine);
