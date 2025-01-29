@@ -12,11 +12,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
       ) {
-  // create virtual MIDI port
+// create virtual MIDI port
+#if JUCE_MAC
   virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
   if (virtualMidiOut) {
     virtualMidiOut->startBackgroundThread();
   }
+#endif
 }
 
 void AudioPluginAudioProcessor::allNotesOff() {
@@ -223,11 +225,13 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
 
   // send the same MIDI messages to virtual MIDI out
+#ifdef JUCE_MAC
   if (virtualMidiOut) {
     virtualMidiOut->sendBlockOfMessages(
         midiMessages, juce::Time::getMillisecondCounterHiRes(),
         getSampleRate());
   }
+#endif
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const {
