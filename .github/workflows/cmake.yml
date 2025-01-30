@@ -37,7 +37,7 @@ jobs:
       id: cache-libs
       uses: actions/cache@v4
       with:
-        path: ${{github.workspace}}
+        path: ${{github.workspace}}/libs
         key: libs-${{matrix.os}}
 
     - name: Configure CMake
