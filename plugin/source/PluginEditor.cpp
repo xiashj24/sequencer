@@ -81,7 +81,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   // editor's size to whatever you need it to be.
 
   // MARK: Initialization
-  setSize(1200, 900);
+  setSize(1200, 800);
   setResizable(true, true);
 }
 
