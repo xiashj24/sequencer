@@ -56,7 +56,7 @@ jobs:
       run: ctest -C ${{ matrix.build_type }}
 
     - name: Add Remove Quarantine Script
-      if: matrix.os == 'macos-15'
+      if: matrix.os == 'macos-15' || matrix.os == 'macos-14'
       run: |
           SCRIPT_NAME="${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/remove_quarantine.sh"
           echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
