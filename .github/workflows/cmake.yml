@@ -37,18 +37,19 @@ jobs:
       run: sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
     - uses: actions/checkout@v4
 
-    - name: Cache dependencies
-      id: cache-libs
-      uses: actions/cache@v4
-      with:
-        path: ${{github.workspace}}/libs
-        key: libs
+    # note: this is not improving build time, disable for now
+    # - name: Cache dependencies
+    #   id: cache-libs
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ${{github.workspace}}/libs
+    #     key: libs
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        cmake -S . -B ${{github.workspace}}/build --preset release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+        cmake -S . -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
 
     - name: Build
       # Build your program with the given configuration
@@ -71,15 +72,16 @@ jobs:
       run: |
         brew install create-dmg
         create-dmg \
-          ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/${{ env.APP_NAME }}.dmg \
+          ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/Standalone/${{ env.APP_NAME }}.dmg \
           ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/Standalone/${{ env.APP_NAME }}.app \
           --hide-extension ${{ env.APP_NAME }}.app \
           --window-size 600 600 \
           --app-drop-link 300 300
+        rm -rf ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/Standalone/${{ env.APP_NAME }}.app
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.os}}-${{matrix.build_type}}
-        path: ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}
+        path: ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/Standalone
         retention-days: 30
