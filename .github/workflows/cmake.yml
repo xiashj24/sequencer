@@ -48,7 +48,7 @@ jobs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        cmake -S . -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
+        cmake -S . -B ${{github.workspace}}/build --preset release -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
 
     - name: Build
       # Build your program with the given configuration
@@ -72,7 +72,7 @@ jobs:
         brew install create-dmg
         create-dmg \
           ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/${{ env.APP_NAME }}.dmg \
-          ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/${{ env.APP_NAME }}.app \
+          ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/Standalone/${{ env.APP_NAME }}.app \
           --hide-extension ${{ env.APP_NAME }}.app \
           --window-size 600 600 \
           --app-drop-link 300 300
