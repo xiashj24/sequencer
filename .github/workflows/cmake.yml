@@ -66,13 +66,14 @@ jobs:
     #       SCRIPT_NAME="${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/remove_quarantine.sh"
     #       echo 'xattr -r -d com.apple.quarantine ./' >> $SCRIPT_NAME
 
-    - name: Create DMG Installer
+    - name: Create dmg installer
       if: matrix.os == 'macos-15' || matrix.os == 'macos-14'
       run: |
+        brew install create-dmg
         create-dmg \
           ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/${{ env.APP_NAME }}.dmg \
           ${{github.workspace}}/build/plugin/AudioPlugin_artefacts/${{matrix.build_type}}/${{ env.APP_NAME }}.app \
-          --hide-extension "${{ env.APP_NAME }}" \
+          --hide-extension ${{ env.APP_NAME }}.app \
           --window-size 600 600 \
           --app-drop-link 300 300
 
