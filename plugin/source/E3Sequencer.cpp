@@ -4,7 +4,7 @@
 
 namespace Sequencer {
 
-void E3Sequencer::tick(NoteEvent* noteOn,
+void E3Sequencer::process(NoteEvent* noteOn,
                        NoteEvent* noteOff,
                        ControlChangeEvent* cc) {
   if (!running_)
@@ -32,7 +32,7 @@ void E3Sequencer::tick(NoteEvent* noteOn,
         if (step.enabled) {
           auto note_on_time =
               ((double)i + step.offset) * one_step_time +
-              tickTime_;  // add 1-tick delay because for the second loop local
+              oneTickTime_;  // add 1-tick delay because for the second loop local
                           // time will not start exactly from 0. Hopefully this
                           // will not cause problems such as missing noteOff :)
           auto note_off_time = note_on_time + step.gate * one_step_time;
@@ -47,7 +47,7 @@ void E3Sequencer::tick(NoteEvent* noteOn,
 
           // TODO: noteOn timing quantization
           if (note_on_time >= local_time &&
-              note_on_time < local_time + tickTime_) {
+              note_on_time < local_time + oneTickTime_) {
             NoteEvent note_on_event(track, step);
             note_on_event.time_since_last_tick = note_on_time - local_time;
 
@@ -57,7 +57,7 @@ void E3Sequencer::tick(NoteEvent* noteOn,
           }
 
           if (note_off_time > local_time &&
-              note_off_time < local_time + tickTime_) {
+              note_off_time < local_time + oneTickTime_) {
             NoteEvent note_off_event(track, step);
             note_off_event.time_since_last_tick = note_off_time - local_time;
 
@@ -75,7 +75,7 @@ void E3Sequencer::tick(NoteEvent* noteOn,
   }
 
   // time update
-  time_ += tickTime_;  // note: this might suffer from low precision after
+  time_ += oneTickTime_;  // note: this might suffer from low precision after
                        // running for a long time, need further testing
 
   return;

@@ -3,13 +3,15 @@
 
 #define STEP_SEQ_MAX_LENGTH 16
 #define STEP_SEQ_DEFAULT_LENGTH 16
+#define MAX_POLYPHONY 8
+
+// note: every track maintains its own NoteEvents[MAX_POLYPHONY]
 
 namespace Sequencer {
 
+
 class Track {
 public:
-  // TODO: polyphony and voice stealing...
-
   enum class PlayMode { Forward, Backward, Random, Bounce, Brownian };
 
   Track(int channel = 1,

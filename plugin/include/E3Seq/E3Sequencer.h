@@ -52,43 +52,44 @@ namespace Sequencer {
 class E3Sequencer {
 public:
   E3Sequencer(int bpm = DEFAULT_BPM)
-      : bpm_(bpm), running_(false), time_(0.0), tickTime_(0.001) {
+      : bpm_(bpm), running_(false), time_(0.0), oneTickTime_(0.001) {
+    // MARK: channel setup
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
       getTrack(i).setChannel(i + 1);
     }
   }
-  // TODO: make this class copyable/movable?
+
+  E3Sequencer(const E3Sequencer&) = delete;
+  E3Sequencer& operator=(const E3Sequencer&) = delete;
   ~E3Sequencer() = default;
 
   /*
     set up tick rate before using
-    for embedded systems, this is most likely to be 1000 Hz (1 ms per tick)
-    for desktop/RPI systems running on sample rate 48k and block size 64
-    samples and ticking once per audio processing block the tick rate is 48k/64
-    = 750
+    for example, if a system runs on sample rate 48k and block size 64
+    samples and ticks once per audio processing block the tick rate is
+    48k/64 = 750
   */
-  void setTickRate(double tickRate) { tickTime_ = 1.0 / tickRate; }
+  void setTickRate(double tickRate) { oneTickTime_ = 1.0 / tickRate; }
 
-  // transport-related
   void start() {
     running_ = true;
     time_ = 0.0;
   }
-  void stop() { running_ = false; }
+  void stop() { running_ = false; } // TODO: send NoteOff to all playing notes (not AllNoteOff!)
   void resume() { running_ = true; }
   void setBpm(double BPM) { bpm_ = BPM; }
 
   bool isRunning() const { return running_; }
 
-  // sequence editing functions
-  // TODO: provide more high level functions
+  // for sequence editing
   Track& getTrack(int index) { return tracks_[index]; }
 
-  void tick(NoteEvent* noteOn,
+  void process(NoteEvent* noteOn,
             NoteEvent* noteOff,
             ControlChangeEvent* cc);  // this should be called once per tick
 
-  // TODO: API to export the sequencer data as some text format (JSON)
+  // TODO: API to export the sequencer data as some text format (JSON or
+  // protobuf)
 
 private:
   // seqencer parameters here
@@ -98,7 +99,7 @@ private:
   bool running_;
   double time_;
 
-  double tickTime_;
+  double oneTickTime_;
 
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };
