@@ -2,15 +2,15 @@
 //	E3Sequencer.h
 //	(c)2025 KORG Inc. / written by Shijie Xia
 //
-//	general-purpose MIDI step sequencer
+//	platform-agonistic polyphonic MIDI step sequencer
 //******************************************************************************
-
-// philosophy
-// platform-agonistic: JUCE API and std::vector should be avoided
-// flexiblility: usable for a lot of products
-// easy to tweak from user interface
+// note : JUCE API and std::vector should be avoided
 
 #pragma once
+#include "Step.h"
+#include "Track.h"
+#include "NoteEvents.h"
+#include "ControlChangeEvents.h"
 
 // TODO: Doxygen documentation
 
@@ -32,14 +32,8 @@
 // (do not implement for now, as this is a keyboard centric parameter)
 // Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
 
-#define STEP_SEQ_MAX_LENGTH \
-  16  // as defined by the product specs, set to 16 for now 
-      // TODO: support UI page switching and max length 128
 #define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
-
-#define STEP_SEQ_DEFAULT_LENGTH 16
 #define DEFAULT_BPM 120
-
 #define RESOLUTION 24  // divide 1 step into 24 micro-steps
 // NoteOn (and NoteOff?) events are quantized to the closest microsteps
 /*
@@ -51,116 +45,12 @@
   rate over 2000Hz), otherwise timing precision suffers
 */
 
-#define DEFAULT_NOTE 72       // C4
-#define DEFAULT_VELOCITY 100  // 1..127, 0 is the same as NoteOff
-#define DEFAULT_GATE 0.75
-
 // TODO: add example code
+
+namespace Sequencer {
 
 class E3Sequencer {
 public:
-  // TODO: ControlChangeEvent
-  struct ControlChangeEvent {};
-
-  // MARK: Step
-  struct Step {
-    // step parameters as seen by the user
-    int note = DEFAULT_NOTE;
-    double gate = DEFAULT_GATE;  // note: gate can be greater than 1 but should
-                                 // be smaller than track length
-    int velocity = DEFAULT_VELOCITY;
-    double offset = 0.0;
-
-    // double pitchbend = 0.0;
-    int roll = 1;
-    double probability = 1.0;
-    int alternate = 1;
-
-    // function-related variables
-    bool enabled = false;
-    bool tie = false;  // or use something like gate > MAX_GATE ?
-  };
-
-  class Track;
-
-  // MARK: NoteEvent
-  struct NoteEvent {
-    bool enabled;
-    int note;
-    int velocity;
-    int channel;
-    double time_since_last_tick;
-
-    NoteEvent()
-        : enabled(false),
-          note(DEFAULT_NOTE),
-          velocity(DEFAULT_VELOCITY),
-          channel(1),
-          time_since_last_tick(0.0) {}
-
-    NoteEvent(Step step)
-        : enabled(true),
-          note(step.note),
-          velocity(step.velocity),
-          channel(1),
-          time_since_last_tick(0.0) {}
-
-    NoteEvent(Track track, Step step)
-        : enabled(true),
-          note(step.note),
-          velocity(step.velocity),
-          channel(track.getChannel()),
-          time_since_last_tick(0.0) {}
-  };
-
-  // MARK: Track
-  class Track {
-  public:
-    // TODO: polyphony and voice stealing...
-
-    enum class PlayMode { Forward, Backward, Random, Bounce, Brownian };
-
-    Track(int channel = 1,
-          int len = STEP_SEQ_DEFAULT_LENGTH,
-          PlayMode mode = PlayMode::Forward)
-        : channel_(channel), length_(len), playMode_(mode), enabled_(true) {}
-
-    void setEnabled(bool enabled) { enabled_ = enabled; }  // need to be called before use
-    void setChannel(int channel) { channel_ = channel; }
-    void setLength(int length) {
-#ifdef JUCE_DEBUG
-      jassert(length > 0);
-#endif
-      length_ = length;
-    }
-    int getChannel() const { return channel_; }
-    bool isEnabled() const { return enabled_; }
-    int getLength() const { return length_; }
-
-    Step& operator[](int index) {
-#ifdef JUCE_DEBUG
-      jassert(index >= 0 && index < STEP_SEQ_MAX_LENGTH);
-#endif
-      return steps_[index];
-    }
-
-    // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids,
-    // etc.)
-
-  private:
-    int channel_;  // MIDI channel
-
-    // track parameters as seen by the user
-    int length_;
-    [[maybe_unused]] PlayMode playMode_;
-    [[maybe_unused]] double swing;  // TODO: implement swing
-    [[maybe_unused]] bool resync_to_longest_track;
-
-    // function-related variables
-    bool enabled_;
-    Step steps_[STEP_SEQ_MAX_LENGTH];
-  };
-
   E3Sequencer(int bpm = DEFAULT_BPM)
       : bpm_(bpm), running_(false), time_(0.0), tickTime_(0.001) {
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
@@ -212,3 +102,5 @@ private:
 
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };
+
+}  // namespace Sequencer

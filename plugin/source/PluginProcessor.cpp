@@ -197,7 +197,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   }
 
   // ..sequencer logic here..
-  E3Sequencer::NoteEvent note_on, note_off;
+  Sequencer::NoteEvent note_on, note_off;
   sequencer_.tick(&note_on, &note_off, nullptr);
 
   // add note event to midiBuffer_

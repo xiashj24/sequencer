@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+namespace Sequencer {
+
 void E3Sequencer::tick(NoteEvent* noteOn,
                        NoteEvent* noteOff,
                        ControlChangeEvent* cc) {
@@ -78,3 +80,5 @@ void E3Sequencer::tick(NoteEvent* noteOn,
 
   return;
 }
+
+}  // namespace Sequencer

@@ -40,11 +40,11 @@ public:
 
   void allNotesOff();
   
-  E3Sequencer& getSequencer() { return sequencer_; }
+  Sequencer::E3Sequencer& getSequencer() { return sequencer_; }
 
   juce::MidiKeyboardState keyboardState;  // visible to the editor
 private:
-  E3Sequencer sequencer_;
+  Sequencer::E3Sequencer sequencer_;
 
   juce::MidiMessageCollector midiCollector_; // for generating MIDI messages via GUI
   juce::MidiBuffer seqMidiBuffer_;

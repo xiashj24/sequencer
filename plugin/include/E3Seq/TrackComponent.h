@@ -143,7 +143,7 @@ public:
   void toggleCollapsed() { setCollapsed(!collapsed_); }
 
 private:
-  E3Sequencer& sequencerRef;
+  Sequencer::E3Sequencer& sequencerRef;
   int trackNumber_;
   bool collapsed_;
 
