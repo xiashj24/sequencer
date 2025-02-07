@@ -19,7 +19,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   bpmSlider.setRange(30, 240, 1);
   bpmSlider.setValue(120);
   bpmSlider.onValueChange = [this] {
-    processorRef.getSequencer().setBpm(bpmSlider.getValue());
+    processorRef.sequencer.setBpm(bpmSlider.getValue());
   };
   addAndMakeVisible(bpmSlider);
 
@@ -29,8 +29,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   keyboardMidiChannelLabel.attachToComponent(&keyboardMidiChannelSlider, true);
   keyboardMidiChannelSlider.setSliderStyle(
       juce::Slider::SliderStyle::IncDecButtons);
-  keyboardMidiChannelSlider.setTextBoxStyle(
-      juce::Slider::TextBoxLeft, false, 30, STEP_BUTTON_HEIGHT);
+  keyboardMidiChannelSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false,
+                                            30, STEP_BUTTON_HEIGHT);
   keyboardMidiChannelSlider.setRange(1, 16, 1);
   keyboardMidiChannelSlider.setValue(1);
   keyboardMidiChannelSlider.onValueChange = [this] {
@@ -44,16 +44,16 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
-    startButton.setButtonText(juce::String::fromUTF8("Start 🎵"));
-    startButton.onClick = [this] { processorRef.getSequencer().start(); };
+    startButton.setButtonText(juce::String::fromUTF8("▶Start"));
+    startButton.onClick = [this] { processorRef.sequencer.start(); };
     addAndMakeVisible(startButton);
 
-    stopButton.setButtonText(juce::String::fromUTF8("Stop ⏹"));
-    stopButton.onClick = [this] { processorRef.getSequencer().stop(); };
+    stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
+    stopButton.onClick = [this] { processorRef.sequencer.stop(); };
     addAndMakeVisible(stopButton);
 
-    continueButton.setButtonText(juce::String::fromUTF8("Cont ⏭"));
-    continueButton.onClick = [this] { processorRef.getSequencer().resume(); };
+    continueButton.setButtonText(juce::String::fromUTF8("⏭Cont"));
+    continueButton.onClick = [this] { processorRef.sequencer.resume(); };
     addAndMakeVisible(continueButton);
   }
 

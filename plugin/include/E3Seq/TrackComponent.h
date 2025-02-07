@@ -13,7 +13,7 @@ namespace audio_plugin {
 class TrackComponent : public juce::Component {
 public:
   TrackComponent(AudioPluginAudioProcessor& p, int trackNumber)
-      : sequencerRef(p.getSequencer()), trackNumber_(trackNumber) {
+      : trackRef(p.sequencer.getTrack(trackNumber)), trackNumber_(trackNumber) {
     // look and feel
     // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
 
@@ -34,8 +34,9 @@ public:
                                juce::Colours::orangered);
 
       stepButtons[i].onClick = [this, i] {
-        sequencerRef.getTrack(trackNumber_)[i].enabled =
-            stepButtons[i].getToggleState();
+        auto step = trackRef.getStepAtIndex(i);
+        step.enabled = stepButtons[i].getToggleState();
+        trackRef.setStepAtIndex(i, step);
       };
       addAndMakeVisible(stepButtons[i]);
     }
@@ -53,8 +54,9 @@ public:
       // TODO: text show note name instead of number
 
       noteKnobs[i].onValueChange = [this, i] {
-        sequencerRef.getTrack(trackNumber_)[i].note =
-            (int)noteKnobs[i].getValue();
+        auto step = trackRef.getStepAtIndex(i);
+        step.note = (int)noteKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
       };
       addAndMakeVisible(noteKnobs[i]);
     }
@@ -70,7 +72,9 @@ public:
       gateKnobs[i].setValue(DEFAULT_GATE);
 
       gateKnobs[i].onValueChange = [this, i] {
-        sequencerRef.getTrack(trackNumber_)[i].gate = gateKnobs[i].getValue();
+        auto step = trackRef.getStepAtIndex(i);
+        step.gate = gateKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
       };
 
       addAndMakeVisible(gateKnobs[i]);
@@ -88,8 +92,9 @@ public:
       velocityKnobs[i].setValue(DEFAULT_VELOCITY);
 
       velocityKnobs[i].onValueChange = [this, i] {
-        sequencerRef.getTrack(trackNumber_)[i].velocity =
-            (int)velocityKnobs[i].getValue();
+        auto step = trackRef.getStepAtIndex(i);
+        step.velocity = (int)velocityKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
       };
 
       addAndMakeVisible(velocityKnobs[i]);
@@ -106,9 +111,10 @@ public:
       offsetKnobs[i].setValue(0.0);
 
       offsetKnobs[i].onValueChange = [this, i] {
-        sequencerRef.getTrack(trackNumber_)[i].offset =
-            offsetKnobs[i].getValue();
-      };  // bug: step 1 minus offset don't work
+        auto step = trackRef.getStepAtIndex(i);
+        step.offset = offsetKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
+      };
       addAndMakeVisible(offsetKnobs[i]);
     }
 
@@ -143,7 +149,7 @@ public:
   void toggleCollapsed() { setCollapsed(!collapsed_); }
 
 private:
-  Sequencer::E3Sequencer& sequencerRef;
+  Sequencer::Track& trackRef;
   int trackNumber_;
   bool collapsed_;
 

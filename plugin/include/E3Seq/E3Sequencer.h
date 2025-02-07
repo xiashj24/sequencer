@@ -4,13 +4,19 @@
 //
 //	platform-agonistic polyphonic MIDI step sequencer
 //******************************************************************************
-// note : JUCE API and std::vector should be avoided
+// note : avoid JUCE API and cpp STL inside this class
 
 #pragma once
 #include "Step.h"
 #include "Track.h"
-#include "NoteEvents.h"
-#include "ControlChangeEvents.h"
+#include "NoteEvent.h"
+#include "ControlChangeEvent.h"
+
+// this class is the interface between the sequencer and the outside world
+// it uses information such as BPM and MIDI clock to translate
+// real world time into the "ticks" used by the sequencer
+// the user of this class should not need to know about internal ticks and note
+// resolution
 
 // TODO: Doxygen documentation
 
@@ -34,7 +40,6 @@
 
 #define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
 #define DEFAULT_BPM 120
-#define RESOLUTION 24  // divide 1 step into 24 micro-steps
 // NoteOn (and NoteOff?) events are quantized to the closest microsteps
 /*
   by default, the timing resolution is a 1/384 of one bar
@@ -52,7 +57,7 @@ namespace Sequencer {
 class E3Sequencer {
 public:
   E3Sequencer(int bpm = DEFAULT_BPM)
-      : bpm_(bpm), running_(false), time_(0.0), oneTickTime_(0.001) {
+      : bpm_(bpm), running_(false), time_(0.0) {
     // MARK: channel setup
     for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
       getTrack(i).setChannel(i + 1);
@@ -69,28 +74,38 @@ public:
     samples and ticks once per audio processing block the tick rate is
     48k/64 = 750
   */
-  void setTickRate(double tickRate) { oneTickTime_ = 1.0 / tickRate; }
-
   void start() {
     running_ = true;
     time_ = 0.0;
+    for (auto& track : tracks_)
+    {
+      track.setTickToZero();
+    }
   }
-  void stop() { running_ = false; } // TODO: send NoteOff to all playing notes (not AllNoteOff!)
+
+  void stop() { running_ = false; }
+  // TODO:
+  // go through the voiceBuffer of every track and
+  // send NoteOff to all playing notes (not AllNoteOff!)
+  // but the outside app is responsible for this action, callback?
+
   void resume() { running_ = true; }
   void setBpm(double BPM) { bpm_ = BPM; }
+  double getBpm() const { return bpm_; }
+
+  double getOneTickTime() const {
+    return 60.0 / bpm_ / 4.0 /
+           STEP_RESOLUTION;  // TODO: alternative time signature
+  }
 
   bool isRunning() const { return running_; }
 
   // for sequence editing
   Track& getTrack(int index) { return tracks_[index]; }
 
-  void process(NoteEvent* noteOn,
-            NoteEvent* noteOff,
-            ControlChangeEvent* cc);  // this should be called once per tick
+  void process(double deltaTime, juce::MidiMessageCollector& collector);
 
-  // TODO: API to export the sequencer data as some text format (JSON or
-  // protobuf)
-
+  // TODO: presets based on JSON or Protobuf
 private:
   // seqencer parameters here
   double bpm_;
@@ -98,9 +113,6 @@ private:
   // function-related variables
   bool running_;
   double time_;
-
-  double oneTickTime_;
-
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };
 

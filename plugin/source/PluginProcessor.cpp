@@ -12,7 +12,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
       ) {
-// create virtual MIDI port
+// create virtual MIDI port (Mac only)
 #if JUCE_MAC
   virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
   if (virtualMidiOut) {
@@ -25,7 +25,7 @@ void AudioPluginAudioProcessor::allNotesOff() {
   for (int i = 0; i < 16; i++) {
     auto message = juce::MidiMessage::allNotesOff(i + 1);
     message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-    midiCollector_.addMessageToQueue(message);
+    guiMidiCollector.addMessageToQueue(message);
   }
 }
 
@@ -95,10 +95,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
   juce::ignoreUnused(sampleRate, samplesPerBlock);
 
   // MARK: initialization
-  midiCollector_.reset(sampleRate);  // TODO: verify that this is called after
-                                     // sample rate changes in DAW
-  sequencer_.setTickRate(sampleRate /
-                         (double)samplesPerBlock);  // tick once per audio block
+  resetSeqMidiCollector(sampleRate);
+  guiMidiCollector.reset(sampleRate);
 }
 
 void AudioPluginAudioProcessor::releaseResources() {
@@ -158,20 +156,19 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::ignoreUnused(channelData);
     // ..do something to the audio data...
   }
-
   // MARK: process MIDI
-  // read MIDI input from MIDI buffer and program sequencer
+  // live recording: read MIDI input from MIDI buffer and program sequencer
 
   // receive MIDI start/stop/continue messages
   for (const auto metadata : midiMessages) {
     auto message = metadata.getMessage();
 
     if (message.isMidiStart()) {
-      sequencer_.start();
+      sequencer.start();
     } else if (message.isMidiStop()) {
-      sequencer_.stop();
+      sequencer.stop();
     } else if (message.isMidiContinue()) {
-      sequencer_.resume();
+      sequencer.resume();
     }
   }
 
@@ -182,13 +179,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
       juce::AudioProcessor::WrapperType::wrapperType_VST3) {
     if (auto dawPlayHead = getPlayHead()) {
       if (auto positionInfo = dawPlayHead->getPosition()) {
-        sequencer_.setBpm(positionInfo->getBpm().orFallback(120.0));
+        sequencer.setBpm(positionInfo->getBpm().orFallback(120.0));
+
         if (positionInfo->getIsPlaying()) {
-          if (!sequencer_.isRunning())
-            sequencer_.start();
+          if (!sequencer.isRunning())
+            sequencer.start();
         } else {
-          if (sequencer_.isRunning())
-            sequencer_.stop();
+          if (sequencer.isRunning())
+            sequencer.stop();
           // note: the host environment is responsible to send allNoteOff for
           // all channels
         }
@@ -197,31 +195,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   }
 
   // ..sequencer logic here..
-  Sequencer::NoteEvent note_on, note_off;
-  sequencer_.process(&note_on, &note_off, nullptr);
-
-  // add note event to midiBuffer_
-  seqMidiBuffer_.clear();
-
-  if (note_on.enabled) {
-    auto note_on_message = juce::MidiMessage::noteOn(
-        note_on.channel, note_on.note, (juce::uint8)note_on.velocity);
-    seqMidiBuffer_.addEvent(
-        note_on_message, (int)(note_on.time_since_last_tick * getSampleRate()));
-  }
-
-  if (note_off.enabled) {
-    auto note_off_message = juce::MidiMessage::noteOff(
-        note_off.channel, note_off.note, (juce::uint8)note_off.velocity);
-    seqMidiBuffer_.addEvent(
-        note_off_message,
-        (int)(note_off.time_since_last_tick * getSampleRate()));
-  }
+  resetSeqMidiCollector(getSampleRate());
+  sequencer.process(getBlockSize()/getSampleRate(), seqMidiCollector);
 
   // overwrite MIDI buffer
-  midiMessages.swapWith(seqMidiBuffer_);
-  midiCollector_.removeNextBlockOfMessages(midiMessages,
-                                           getBlockSize());  // live play
+  seqMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());
+  guiMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());
   keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
 
   // send the same MIDI messages to virtual MIDI out

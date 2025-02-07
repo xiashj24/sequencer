@@ -18,7 +18,7 @@ public:
 
   bool keyPressed(const juce::KeyPress& key) override {
     if (key == juce::KeyPress::spaceKey) {
-      auto& seq = processorRef.getSequencer();
+      auto& seq = processorRef.sequencer;
       if (seq.isRunning()) {
         seq.stop();
       } else {

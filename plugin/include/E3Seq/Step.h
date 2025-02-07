@@ -4,6 +4,9 @@
 #define DEFAULT_VELOCITY 100  // 1..127 since 0 is the same as NoteOff
 #define DEFAULT_GATE 0.75
 
+#define OFFSET_MIN -0.5
+#define OFFSET_MAX 0.49 // TODO: use this
+
 namespace Sequencer {
 
 struct Step {

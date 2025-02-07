@@ -39,19 +39,24 @@ public:
   void setStateInformation(const void* data, int sizeInBytes) override;
 
   void allNotesOff();
-  
-  Sequencer::E3Sequencer& getSequencer() { return sequencer_; }
 
-  juce::MidiKeyboardState keyboardState;  // visible to the editor
+  Sequencer::E3Sequencer sequencer;
+
+  juce::MidiKeyboardState keyboardState;
+
 private:
-  Sequencer::E3Sequencer sequencer_;
-
-  juce::MidiMessageCollector midiCollector_; // for generating MIDI messages via GUI
-  juce::MidiBuffer seqMidiBuffer_;
+  // remember to call this whenever BPM changes
+  void resetSeqMidiCollector(double sampleRate) {
+    seqMidiCollector.reset(
+        sampleRate *
+        sequencer
+            .getOneTickTime());  // converts internal ticks to time in samples
+  }
+  
+  juce::MidiMessageCollector guiMidiCollector;
+  juce::MidiMessageCollector seqMidiCollector;
 
   std::unique_ptr<juce::MidiOutput> virtualMidiOut;
-  // std::unique_ptr<juce::MidiInput> midiInput; // TODO: implement MIDI input
-  // via MidiMessageCollector std::unique_ptr<juce::MidiOutput> midiOutput;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

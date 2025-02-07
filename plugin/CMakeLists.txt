@@ -30,6 +30,7 @@ target_sources(${PROJECT_NAME}
         source/PluginEditor.cpp
         source/PluginProcessor.cpp
         source/E3Sequencer.cpp
+        source/Track.cpp
 )
 
 # Sets the include directories of the plugin project.
