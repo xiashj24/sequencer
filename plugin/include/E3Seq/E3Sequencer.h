@@ -13,8 +13,6 @@
 // #include "ControlChangeEvent.h"
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
-
-
 // TODO: Doxygen documentation
 
 // PARAMETERS
@@ -64,15 +62,24 @@ public:
 
   void start(double startTime);
 
-  void stop() { running_ = false; }
-  // TODO:
-  // go through the voiceBuffer of every track and
-  // send NoteOff to all playing notes (not AllNoteOff!)
-  // but the outside app is responsible for this action, callback?
+  void stop() {
+    running_ = false;
+    panic();
+  }
 
   void resume() { running_ = true; }
   void setBpm(double BPM) { bpm_ = BPM; }
   double getBpm() const { return bpm_; }
+
+  // send allNoteOff to all tracks immediately
+  // note: this is probably not the right way to do it, will refactor later
+  void panic() {
+    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
+      auto msg = juce::MidiMessage::allNotesOff(i + 1);
+      msg.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
+      midiCollector_.addMessageToQueue(msg);
+    }
+  }
 
   bool isRunning() const { return running_; }
 
