@@ -38,21 +38,14 @@ public:
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
 
-  void allNotesOff();
+  void panic();
 
+  // treat this like a global instance
   Sequencer::E3Sequencer sequencer;
 
   juce::MidiKeyboardState keyboardState;
-
 private:
   // remember to call this whenever BPM changes
-  void resetSeqMidiCollector(double sampleRate) {
-    seqMidiCollector.reset(
-        sampleRate *
-        sequencer
-            .getOneTickTime());  // converts internal ticks to time in samples
-  }
-  
   juce::MidiMessageCollector guiMidiCollector;
   juce::MidiMessageCollector seqMidiCollector;
 

@@ -16,8 +16,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   bpmSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
   bpmSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false, 40,
                             STEP_BUTTON_HEIGHT);
-  bpmSlider.setRange(30, 240, 1);
-  bpmSlider.setValue(120);
+  bpmSlider.setRange(BPM_MIN, BPM_MAX, 1);
+  bpmSlider.setValue(BPM_DEFAULT);
   bpmSlider.onValueChange = [this] {
     processorRef.sequencer.setBpm(bpmSlider.getValue());
   };
@@ -38,14 +38,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   };
   addAndMakeVisible(keyboardMidiChannelSlider);
 
-  allNotesOffButton.setButtonText("All Notes Off");
-  allNotesOffButton.onClick = [this] { processorRef.allNotesOff(); };
-  addAndMakeVisible(allNotesOffButton);
+  panicButton.setButtonText("Panic!");
+  panicButton.onClick = [this] { processorRef.panic(); };
+  addAndMakeVisible(panicButton);
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
     startButton.setButtonText(juce::String::fromUTF8("▶Start"));
-    startButton.onClick = [this] { processorRef.sequencer.start(); };
+    startButton.onClick = [this] {
+      processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
+                                   0.001);
+    };
     addAndMakeVisible(startButton);
 
     stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
@@ -113,9 +116,9 @@ void AudioPluginAudioProcessorEditor::resized() {
                            STEP_BUTTON_HEIGHT);
   bpmSlider.setBounds(260, util_buttons_height, 200, STEP_BUTTON_HEIGHT);
 
-  keyboardMidiChannelSlider.setBounds(getWidth() - 200, util_buttons_height, 80,
+  keyboardMidiChannelSlider.setBounds(getWidth() - 170, util_buttons_height, 80,
                                       STEP_BUTTON_HEIGHT);
-  allNotesOffButton.setBounds(getWidth() - 100, getHeight() - 130, 90,
+  panicButton.setBounds(getWidth() - 80, getHeight() - 130, 70,
                               STEP_BUTTON_HEIGHT);
   onScreenKeyboard.setBounds(10, getHeight() - 90, getWidth() - 20, 80);
 

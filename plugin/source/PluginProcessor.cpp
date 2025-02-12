@@ -11,8 +11,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-      ) {
-// create virtual MIDI port (Mac only)
+              ),
+      sequencer(seqMidiCollector) {
+// create virtual MIDI out (Mac only)
 #if JUCE_MAC
   virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
   if (virtualMidiOut) {
@@ -21,7 +22,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
 }
 
-void AudioPluginAudioProcessor::allNotesOff() {
+void AudioPluginAudioProcessor::panic() {
   for (int i = 0; i < 16; i++) {
     auto message = juce::MidiMessage::allNotesOff(i + 1);
     message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
@@ -95,7 +96,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate,
   juce::ignoreUnused(sampleRate, samplesPerBlock);
 
   // MARK: initialization
-  resetSeqMidiCollector(sampleRate);
+  seqMidiCollector.reset(sampleRate);
   guiMidiCollector.reset(sampleRate);
 }
 
@@ -159,20 +160,22 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // MARK: process MIDI
   // live recording: read MIDI input from MIDI buffer and program sequencer
 
-  // receive MIDI start/stop/continue messages
+  // process MIDI start/stop/continue messages
+  // TODO: move this inside a separate MIDIMessageHandler
   for (const auto metadata : midiMessages) {
     auto message = metadata.getMessage();
 
     if (message.isMidiStart()) {
-      sequencer.start();
+      sequencer.start(juce::Time::getMillisecondCounterHiRes() * 0.001);
     } else if (message.isMidiStop()) {
       sequencer.stop();
     } else if (message.isMidiContinue()) {
-      sequencer.resume();
+      sequencer.resume();  // TODO: resume will not work correctly due to change
+                           // of time keeping mechanism
     }
+    // TODO: midi clock to bpm
   }
 
-  midiMessages.clear();  // discard input MIDI messages
   // generate MIDI start/stop/continue messages by querying DAW transport
   // also set bpm
   if (this->wrapperType ==
@@ -183,27 +186,27 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
         if (positionInfo->getIsPlaying()) {
           if (!sequencer.isRunning())
-            sequencer.start();
+            sequencer.start(juce::Time::getMillisecondCounterHiRes() * 0.001);
         } else {
           if (sequencer.isRunning())
             sequencer.stop();
-          // note: the host environment is responsible to send allNoteOff for
-          // all channels
         }
       }
     }
   }
 
+  midiMessages.clear();  // discard input MIDI messages
+
   // ..sequencer logic here..
-  resetSeqMidiCollector(getSampleRate());
-  sequencer.process(getBlockSize()/getSampleRate(), seqMidiCollector);
+  sequencer.process(getBlockSize() / getSampleRate());
 
   // overwrite MIDI buffer
   seqMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());
   guiMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());
+  // visualize MIDI in all channels and manual trigger
   keyboardState.processNextMidiBuffer(midiMessages, 0, getBlockSize(), true);
 
-  // send the same MIDI messages to virtual MIDI out
+  // send the same MIDI messages to virtual MIDI out (Mac only)
 #ifdef JUCE_MAC
   if (virtualMidiOut) {
     virtualMidiOut->sendBlockOfMessages(

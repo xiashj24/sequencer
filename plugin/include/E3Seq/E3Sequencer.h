@@ -9,14 +9,11 @@
 #pragma once
 #include "Step.h"
 #include "Track.h"
-#include "NoteEvent.h"
-#include "ControlChangeEvent.h"
+// #include "NoteEvent.h"
+// #include "ControlChangeEvent.h"
+#include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
-// this class is the interface between the sequencer and the outside world
-// it uses information such as BPM and MIDI clock to translate
-// real world time into the "ticks" used by the sequencer
-// the user of this class should not need to know about internal ticks and note
-// resolution
+
 
 // TODO: Doxygen documentation
 
@@ -39,8 +36,10 @@
 // Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
 
 #define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
-#define DEFAULT_BPM 120
-// NoteOn (and NoteOff?) events are quantized to the closest microsteps
+#define BPM_DEFAULT 120
+#define BPM_MAX 240
+#define BPM_MIN 30
+
 /*
   by default, the timing resolution is a 1/384 of one bar
   (or 1/24 of a quarter note, same as Elektron)
@@ -56,32 +55,14 @@ namespace Sequencer {
 
 class E3Sequencer {
 public:
-  E3Sequencer(int bpm = DEFAULT_BPM)
-      : bpm_(bpm), running_(false), time_(0.0) {
-    // MARK: channel setup
-    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
-      getTrack(i).setChannel(i + 1);
-    }
-  }
+  E3Sequencer(juce::MidiMessageCollector& midiCollector,
+              double bpm = BPM_DEFAULT);
 
   E3Sequencer(const E3Sequencer&) = delete;
   E3Sequencer& operator=(const E3Sequencer&) = delete;
   ~E3Sequencer() = default;
 
-  /*
-    set up tick rate before using
-    for example, if a system runs on sample rate 48k and block size 64
-    samples and ticks once per audio processing block the tick rate is
-    48k/64 = 750
-  */
-  void start() {
-    running_ = true;
-    time_ = 0.0;
-    for (auto& track : tracks_)
-    {
-      track.setTickToZero();
-    }
-  }
+  void start(double startTime);
 
   void stop() { running_ = false; }
   // TODO:
@@ -93,26 +74,28 @@ public:
   void setBpm(double BPM) { bpm_ = BPM; }
   double getBpm() const { return bpm_; }
 
-  double getOneTickTime() const {
-    return 60.0 / bpm_ / 4.0 /
-           STEP_RESOLUTION;  // TODO: alternative time signature
-  }
-
   bool isRunning() const { return running_; }
 
-  // for sequence editing
+  // sequencer programming interface
   Track& getTrack(int index) { return tracks_[index]; }
+  // second-based timekeeping, call this frequenctly, preferably over 1kHz
+  void process(double deltaTime);
 
-  void process(double deltaTime, juce::MidiMessageCollector& collector);
+  // tick-based timekeeping for MIDI clock sync
+  // void tick(juce::MidiMessageCollector& collector);
 
   // TODO: presets based on JSON or Protobuf
 private:
   // seqencer parameters here
   double bpm_;
+  // TODO: alternative time signatures
+  double getOneTickTime() const { return 15.0 / bpm_ / TICKS_PER_STEP; }
 
   // function-related variables
   bool running_;
-  double time_;
+  double timeSinceStart_;
+  double startTime_;
+  juce::MidiMessageCollector& midiCollector_;
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "Step.h"
-#include <juce_audio_basics/juce_audio_basics.h>    // juce::MidiMessageSequence
-#include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
+#include <juce_audio_basics/juce_audio_basics.h>  // juce::MidiMessageSequence
 
 // I'm sorry I broke the rule of not using juce
 // because juce::MidiMessageSequence is too good to not use for a sequencer
@@ -16,7 +15,10 @@
 #define STEP_SEQ_DEFAULT_LENGTH 16
 #define MAX_POLYPHONY 8
 #define MAX_MOTION_SLOTS 8  // not used now
-#define STEP_RESOLUTION 24  // one step is broken into {STEP_RESOLUTION} ticks
+#define TICKS_PER_STEP 24   // one step is broken into {TICKS_PER_STEP} ticks
+// note: TICKS_PER_STEP over 24 do not make much sense since time keeping
+// functions like processBlock() or MIDI callbacks are not called frequently
+// enough
 
 namespace Sequencer {
 
@@ -46,21 +48,13 @@ public:
   int getChannel() const { return channel_; }
   bool isEnabled() const { return enabled_; }
   int getLength() const { return length_; }
-  void setTickToZero() { tick_ = 0; }
+  void returnToStart() { tick_ = 0; }  // for resync
 
-  // note: midiCollector.reset need to be called outside
-  void tick(juce::MidiMessageCollector& midiCollector) {
-    if (enabled_) {
-      auto index = oneLoopMidiSeq_.getNextIndexAtTime(tick_);
-      // there might be more than one midiEvent during this tick
-      while (oneLoopMidiSeq_.getEventTime(index) < tick_ + 1) {
-        auto midi_event = oneLoopMidiSeq_.getEventPointer(index);
-        midiCollector.addMessageToQueue(midi_event->message); // BUG: time stamp cannot be zero
-      }                                                       // time conversion is tricky but you are almost there, you can do it!!!!!!!
-    }
+  // callback to pass MIDI messages to caller
+  std::function<void(juce::MidiMessage msg)> sendMidiMessage;
 
-    tick_ = (tick_ + 1) % (length_ * STEP_RESOLUTION);
-  }
+  // this function should be called {TICKS_PER_STEP} times per step
+  void tick();
 
   Step getStepAtIndex(int index) const { return steps_[index]; }
   void setStepAtIndex(int index, Step step);
@@ -78,11 +72,12 @@ private:
 
   // function-related variables
   bool enabled_;
-  int tick_;  // set to 0 for resync
+  int tick_;
   Step steps_[STEP_SEQ_MAX_LENGTH];
+  std::optional<Step> steps_buffer_[STEP_SEQ_MAX_LENGTH];
 
   // contains all the MIDI messages in one run of the track
-  // time stamp is in ticks (one step is broken down into {STEP_RESOLUTION}
+  // time stamp is in ticks (one step is broken down into {TICKS_PER_STEP}
   // ticks)
   juce::MidiMessageSequence oneLoopMidiSeq_;
 };

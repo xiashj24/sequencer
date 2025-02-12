@@ -5,9 +5,24 @@
 #define DEFAULT_GATE 0.75
 
 #define OFFSET_MIN -0.5
-#define OFFSET_MAX 0.49 // TODO: use this
+#define OFFSET_MAX 0.49  // TODO: use this
 
 namespace Sequencer {
+
+// TODO: show offset names on UI labels 
+enum class Offset {
+  _1o384,
+  _1o192,
+  _1o96,
+  _5o384,
+  _1o64,
+  _7o384,
+  _1o48,
+  _3o128,
+  _5o192,
+  _11o384,
+  _1o32
+};
 
 struct Step {
   // step parameters as seen by the user

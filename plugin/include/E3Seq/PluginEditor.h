@@ -41,7 +41,7 @@ private:
   juce::TextButton stopButton;
   juce::TextButton continueButton;
 
-  juce::TextButton allNotesOffButton;
+  juce::TextButton panicButton;
 
   juce::Label bpmLabel;
   juce::Slider bpmSlider;
