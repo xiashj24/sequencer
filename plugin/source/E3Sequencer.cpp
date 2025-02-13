@@ -21,7 +21,7 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       // time translation
       int tick = (int)msg.getTimeStamp();
       double real_time_stamp = startTime_ + getOneTickTime() * tick;
-      // this time translation is smelling....need some further debugging
+      // this time translation code is smelling....need some further thinking
       // TODO: is it possible to implement note stealing via a simple queue?
       this->midiCollector_.addMessageToQueue(
           msg.withTimeStamp(real_time_stamp));

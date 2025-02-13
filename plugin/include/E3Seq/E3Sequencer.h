@@ -67,6 +67,8 @@ public:
     panic();
   }
 
+  bool neverStarted() const { return startTime_ == 0.0; }
+
   void resume() { running_ = true; }
   void setBpm(double BPM) { bpm_ = BPM; }
   double getBpm() const { return bpm_; }

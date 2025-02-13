@@ -22,7 +22,11 @@ public:
       if (seq.isRunning()) {
         seq.stop();
       } else {
-        seq.resume();  // or start?
+        if (seq.neverStarted()) {
+          seq.start(juce::Time::getMillisecondCounterHiRes());
+        } else {
+          seq.resume();
+        }
       }
       return true;  // Key handled
     }
