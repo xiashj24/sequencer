@@ -91,6 +91,8 @@ private:
   void renderStep(int index);
 
   // timestamp is in ticks (not seconds or samples)
+  void renderMidiMessage(juce::MidiMessage message);
+
   // invariant: MIDI events are always sorted by timestamp
   // note: when porting to Spark, change from juce::MidiMessageSequence to a
   // simpler custom class

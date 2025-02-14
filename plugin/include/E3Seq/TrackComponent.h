@@ -118,7 +118,42 @@ public:
       addAndMakeVisible(offsetKnobs[i]);
     }
 
-    // overall component size
+    // roll
+    rollLabel.setText("roll", juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(rollLabel);
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+      rollKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
+      rollKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+                                   STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+      rollKnobs[i].setRange(1, 4, 1);
+      rollKnobs[i].setValue(1);
+
+      rollKnobs[i].onValueChange = [this, i] {
+        auto step = trackRef.getStepAtIndex(i);
+        step.roll = (int)rollKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
+      };
+      addAndMakeVisible(rollKnobs[i]);
+    }
+
+    // probability
+    probabilityLabel.setText("probability",
+                             juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(probabilityLabel);
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+      probabilityKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
+      probabilityKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+                                          STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+      probabilityKnobs[i].setRange(0, 1, 0.01);
+      probabilityKnobs[i].setValue(1);
+
+      probabilityKnobs[i].onValueChange = [this, i] {
+        auto step = trackRef.getStepAtIndex(i);
+        step.probability = probabilityKnobs[i].getValue();
+        trackRef.setStepAtIndex(i, step);
+      };
+      addAndMakeVisible(probabilityKnobs[i]);
+    }
   }
 
   void resized() override {
@@ -131,6 +166,10 @@ public:
                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     offsetLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                           STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+    rollLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
+                        STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+    probabilityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
+                               STEP_BUTTON_WIDTH, KNOB_HEIGHT);
 
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
       int x = (i + 1) * (STEP_BUTTON_WIDTH + STEP_BUTTON_SPACING);
@@ -143,6 +182,10 @@ public:
                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       offsetKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                                STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+      rollKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
+                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+      probabilityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
+                                    STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     }
   }
 
@@ -164,7 +207,7 @@ private:
     } else {
       setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
                   STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
-              STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4);
+              STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6);
       trackCollapseButton.setButtonText("Track " +
                                         juce::String(trackNumber_ + 1) + " ▼");
     }
@@ -175,12 +218,16 @@ private:
   juce::Label gateLabel;
   juce::Label velocityLabel;
   juce::Label offsetLabel;
+  juce::Label rollLabel;
+  juce::Label probabilityLabel;
 
   juce::TextButton stepButtons[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider noteKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider gateKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider velocityKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider offsetKnobs[STEP_SEQ_DEFAULT_LENGTH];
+  juce::Slider rollKnobs[STEP_SEQ_DEFAULT_LENGTH];
+  juce::Slider probabilityKnobs[STEP_SEQ_DEFAULT_LENGTH];
 };
 
 }  // namespace audio_plugin
