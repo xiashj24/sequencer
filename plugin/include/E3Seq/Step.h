@@ -40,6 +40,7 @@ struct Step {
   // function-related variables
   bool enabled = false;
   bool tie = false;  // or use something like gate > MAX_GATE ?
+
 };
 
 }  // namespace Sequencer
