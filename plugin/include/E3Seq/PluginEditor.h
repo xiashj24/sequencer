@@ -53,7 +53,19 @@ private:
   juce::Label keyboardMidiChannelLabel;
   juce::Slider keyboardMidiChannelSlider;
 
+  juce::TextButton helpButton;
+
+  void showHelpPopup() {
+    juce::AlertWindow::showMessageBoxAsync(
+        juce::AlertWindow::InfoIcon, "Help",
+        "Space key: toggle stop/continue\n"
+        "Double click or alt+click on any parameter to reset to its default "
+        "value.\n");
+  }
+
   juce::MidiKeyboardComponent onScreenKeyboard;
+
+  juce::TooltipWindow tooltip;
 
   // void logMessage(const juce::String& m) {
   //   midiMessagesBox.moveCaretToEnd();

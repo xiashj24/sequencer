@@ -18,6 +18,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
                             STEP_BUTTON_HEIGHT);
   bpmSlider.setRange(BPM_MIN, BPM_MAX, 1);
   bpmSlider.setValue(BPM_DEFAULT);
+  bpmSlider.setDoubleClickReturnValue(true, BPM_DEFAULT);
   bpmSlider.onValueChange = [this] {
     processorRef.sequencer.setBpm(bpmSlider.getValue());
   };
@@ -39,8 +40,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   addAndMakeVisible(keyboardMidiChannelSlider);
 
   panicButton.setButtonText("Panic!");
+  panicButton.setTooltip("force all notes off");
   panicButton.onClick = [this] { processorRef.panic(); };
   addAndMakeVisible(panicButton);
+
+  helpButton.setButtonText("?");
+  helpButton.setTooltip("tips and shortcuts");
+  helpButton.onClick = [this] { showHelpPopup(); };
+  // TODO: callback
+  addAndMakeVisible(helpButton);
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
@@ -99,6 +107,9 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g) {
 
 void AudioPluginAudioProcessorEditor::resized() {
   // MARK: GUI layout
+  auto bounds = getBounds();
+
+  onScreenKeyboard.setBounds(bounds.removeFromBottom(90));
 
   int lastX = 10, lastY = 10;
   for (int i = 0; i < 8; i++) {
@@ -107,21 +118,24 @@ void AudioPluginAudioProcessorEditor::resized() {
     lastY += tracks[i].getHeight() + 10;
   }
 
-  int util_buttons_height = getHeight() - 130;
-  startButton.setBounds(10, util_buttons_height, STEP_BUTTON_WIDTH,
-                        STEP_BUTTON_HEIGHT);
-  stopButton.setBounds(80, util_buttons_height, STEP_BUTTON_WIDTH,
-                       STEP_BUTTON_HEIGHT);
-  continueButton.setBounds(150, util_buttons_height, STEP_BUTTON_WIDTH,
-                           STEP_BUTTON_HEIGHT);
-  bpmSlider.setBounds(260, util_buttons_height, 200, STEP_BUTTON_HEIGHT);
+  auto utility_bar =
+      bounds.removeFromBottom(STEP_BUTTON_HEIGHT + 20).reduced(10);
 
-  keyboardMidiChannelSlider.setBounds(getWidth() - 170, util_buttons_height, 80,
-                                      STEP_BUTTON_HEIGHT);
-  panicButton.setBounds(getWidth() - 80, getHeight() - 130, 70,
-                        STEP_BUTTON_HEIGHT);
-  onScreenKeyboard.setBounds(10, getHeight() - 90, getWidth() - 20, 80);
+  startButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(10);
+  stopButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(10);
+  continueButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(50);
+  bpmSlider.setBounds(utility_bar.removeFromLeft(240));
+  utility_bar.removeFromLeft(10);
 
+  helpButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_HEIGHT));
+  utility_bar.removeFromRight(10);
+  panicButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromRight(10);
+  keyboardMidiChannelSlider.setBounds(utility_bar.removeFromRight(80));
+  utility_bar.removeFromRight(10);
   // midiMessagesBox.setBounds(getLocalBounds()
   //                               .withWidth(halfWidth)
   //                               .withX(halfWidth)
