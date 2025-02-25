@@ -7,10 +7,8 @@
 // note : avoid JUCE API and cpp STL inside this class
 
 #pragma once
-#include "Step.h"
-#include "Track.h"
-// #include "NoteEvent.h"
-// #include "ControlChangeEvent.h"
+#include "E3Seq/Step.h"
+#include "E3Seq/Track.h"
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
 // TODO: Doxygen documentation

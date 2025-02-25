@@ -1,11 +1,9 @@
 #pragma once
 
-#include "PluginProcessor.h"
-#include <juce_audio_utils/juce_audio_utils.h>  // MidiKeyboard component
-#include "TrackComponent.h"
+#include "E3Seq/PluginProcessor.h"
+#include "E3Seq/SequencerComponent.h"
 #include "Utility.h"
-
-// TODO: add version display
+#include <juce_audio_utils/juce_audio_utils.h>  // juce::MidiKeyboardComponent
 
 namespace audio_plugin {
 
@@ -40,7 +38,9 @@ private:
   AudioPluginAudioProcessor& processorRef;
 
   // GUI elements
-  TrackComponent tracks[8];
+  juce::Viewport sequencerViewport;
+  SequencerComponent sequencerEditor;
+  // TrackComponent tracks[8];
 
   juce::TextButton startButton;
   juce::TextButton stopButton;

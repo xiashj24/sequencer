@@ -1,5 +1,5 @@
 #pragma once
-#include "Step.h"
+#include "E3Seq/Step.h"
 #include <juce_audio_basics/juce_audio_basics.h>  // juce::MidiMessageSequence
 
 /*

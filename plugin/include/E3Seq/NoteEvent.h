@@ -1,6 +1,6 @@
 #pragma once
-#include "Step.h"
-#include "Track.h"
+#include "E3Seq/Step.h"
+#include "E3Seq/Track.h"
 
 namespace Sequencer {
 

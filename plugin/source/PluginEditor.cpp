@@ -6,7 +6,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     AudioPluginAudioProcessor& p)
     : AudioProcessorEditor(&p),
       processorRef(p),
-      tracks{{p, 0}, {p, 1}, {p, 2}, {p, 3}, {p, 4}, {p, 5}, {p, 6}, {p, 7}},
+      sequencerEditor(p),
       onScreenKeyboard(p.keyboardState,
                        juce::MidiKeyboardComponent::horizontalKeyboard) {
   juce::ignoreUnused(processorRef);
@@ -47,7 +47,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   helpButton.setButtonText("?");
   helpButton.setTooltip("tips and shortcuts");
   helpButton.onClick = [this] { showHelpPopup(); };
-  // TODO: callback
   addAndMakeVisible(helpButton);
 
   if (processorRef.wrapperType ==
@@ -68,9 +67,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     addAndMakeVisible(continueButton);
   }
 
-  for (int i = 0; i < 8; i++) {
-    addAndMakeVisible(tracks[i]);
-  }
+  addAndMakeVisible(sequencerViewport);
+  // addAndMakeVisible(sequencerEditor);
+  sequencerViewport.setViewedComponent(&sequencerEditor, false);
+
   addAndMakeVisible(onScreenKeyboard);
 
   // TODO: set up message box
@@ -92,7 +92,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   // editor's size to whatever you need it to be.
 
   // MARK: Initialization
-  setSize(1200, 800);
+  setSize(1220, 700);
   setResizable(true, true);
 }
 
@@ -110,13 +110,6 @@ void AudioPluginAudioProcessorEditor::resized() {
   auto bounds = getBounds();
 
   onScreenKeyboard.setBounds(bounds.removeFromBottom(90));
-
-  int lastX = 10, lastY = 10;
-  for (int i = 0; i < 8; i++) {
-    tracks[i].setBounds(lastX, lastY, tracks[i].getWidth(),
-                        tracks[i].getHeight());
-    lastY += tracks[i].getHeight() + 10;
-  }
 
   auto utility_bar =
       bounds.removeFromBottom(STEP_BUTTON_HEIGHT + 20).reduced(10);
@@ -136,11 +129,8 @@ void AudioPluginAudioProcessorEditor::resized() {
   utility_bar.removeFromRight(10);
   keyboardMidiChannelSlider.setBounds(utility_bar.removeFromRight(80));
   utility_bar.removeFromRight(10);
-  // midiMessagesBox.setBounds(getLocalBounds()
-  //                               .withWidth(halfWidth)
-  //                               .withX(halfWidth)
-  //                               .reduced(10)
-  //                               .withTrimmedBottom(100));
+
+  sequencerViewport.setBounds(bounds.reduced(10));
 }
 
 }  // namespace audio_plugin

@@ -1,5 +1,5 @@
 #pragma once
-#include "PluginProcessor.h"
+#include "E3Seq/PluginProcessor.h"
 
 namespace audio_plugin {
 
@@ -187,7 +187,7 @@ public:
     }
   }
 
-  void resized() override {
+  void resized() override final {
     // layout
     trackCollapseButton.setBounds(0, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
     noteLabel.setBounds(0, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH, KNOB_HEIGHT);
@@ -224,7 +224,10 @@ public:
     }
   }
 
-  void toggleCollapsed() { setCollapsed(!collapsed_); }
+  void toggleCollapsed() {
+    setCollapsed(!collapsed_);
+    getParentComponent()->resized();
+  }
 
 private:
   Sequencer::Track& trackRef;
