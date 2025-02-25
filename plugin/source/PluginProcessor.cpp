@@ -1,6 +1,8 @@
 #include "E3Seq/PluginProcessor.h"
 #include "E3Seq/PluginEditor.h"
 
+#define TIMER_INTERVAL_MS 1
+
 namespace audio_plugin {
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     : AudioProcessor(
@@ -20,6 +22,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     virtualMidiOut->startBackgroundThread();
   }
 #endif
+  startTimer(TIMER_INTERVAL_MS);
+}
+
+void AudioPluginAudioProcessor::hiResTimerCallback() {
+  // ..sequencer logic here..
+  constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
+  sequencer.process(deltaTime);
 }
 
 void AudioPluginAudioProcessor::panic() {
@@ -30,7 +39,9 @@ void AudioPluginAudioProcessor::panic() {
   }
 }
 
-AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {}
+AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {
+  stopTimer();
+}
 
 const juce::String AudioPluginAudioProcessor::getName() const {
   return JucePlugin_Name;
@@ -196,9 +207,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   }
 
   midiMessages.clear();  // discard input MIDI messages
-
-  // ..sequencer logic here..
-  sequencer.process(getBlockSize() / getSampleRate());
 
   // overwrite MIDI buffer
   seqMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());

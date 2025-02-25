@@ -6,7 +6,8 @@
 #include "E3Sequencer.h"
 
 namespace audio_plugin {
-class AudioPluginAudioProcessor : public juce::AudioProcessor {
+class AudioPluginAudioProcessor : public juce::AudioProcessor,
+                                  private juce::HighResolutionTimer {
 public:
   AudioPluginAudioProcessor();
   ~AudioPluginAudioProcessor() override;
@@ -23,6 +24,8 @@ public:
   bool hasEditor() const override;
 
   const juce::String getName() const override;
+
+  virtual void hiResTimerCallback() override final;
 
   bool acceptsMidi() const override;
   bool producesMidi() const override;
@@ -44,6 +47,7 @@ public:
   Sequencer::E3Sequencer sequencer;
 
   juce::MidiKeyboardState keyboardState;
+
 private:
   // remember to call this whenever BPM changes
   juce::MidiMessageCollector guiMidiCollector;

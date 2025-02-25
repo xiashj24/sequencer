@@ -44,18 +44,18 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
-    startButton.setButtonText(juce::String::fromUTF8("▶Start"));
+    startButton.setButtonText(juce::String::fromUTF8(u8"▶Start"));
     startButton.onClick = [this] {
       processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
                                    0.001);
     };
     addAndMakeVisible(startButton);
 
-    stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
+    stopButton.setButtonText(juce::String::fromUTF8(u8"⏹Stop"));
     stopButton.onClick = [this] { processorRef.sequencer.stop(); };
     addAndMakeVisible(stopButton);
 
-    continueButton.setButtonText(juce::String::fromUTF8("⏭Cont"));
+    continueButton.setButtonText(juce::String::fromUTF8(u8"⏭Cont"));
     continueButton.onClick = [this] { processorRef.sequencer.resume(); };
     addAndMakeVisible(continueButton);
   }
@@ -119,7 +119,7 @@ void AudioPluginAudioProcessorEditor::resized() {
   keyboardMidiChannelSlider.setBounds(getWidth() - 170, util_buttons_height, 80,
                                       STEP_BUTTON_HEIGHT);
   panicButton.setBounds(getWidth() - 80, getHeight() - 130, 70,
-                              STEP_BUTTON_HEIGHT);
+                        STEP_BUTTON_HEIGHT);
   onScreenKeyboard.setBounds(10, getHeight() - 90, getWidth() - 20, 80);
 
   // midiMessagesBox.setBounds(getLocalBounds()

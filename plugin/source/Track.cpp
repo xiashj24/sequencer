@@ -2,7 +2,9 @@
 
 namespace Sequencer {
 
-// Question: should setStepAtIndex be buffered to avoid race condition?
+// TODO: setStepAtIndex will cause data race between the message thread and
+// real-time thread
+// better have a solution for that
 
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
