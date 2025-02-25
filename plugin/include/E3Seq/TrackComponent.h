@@ -51,6 +51,7 @@ public:
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       noteKnobs[i].setRange(21, 127, 1);
       noteKnobs[i].setValue(DEFAULT_NOTE);
+      noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
       // TODO: text show note name instead of number
 
       noteKnobs[i].onValueChange = [this, i] {
@@ -70,6 +71,7 @@ public:
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       gateKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
       gateKnobs[i].setValue(DEFAULT_GATE);
+      gateKnobs[i].setDoubleClickReturnValue(true, DEFAULT_GATE);
 
       gateKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -90,6 +92,7 @@ public:
                                        STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       velocityKnobs[i].setRange(1, 127, 1);
       velocityKnobs[i].setValue(DEFAULT_VELOCITY);
+      velocityKnobs[i].setDoubleClickReturnValue(true, DEFAULT_VELOCITY);
 
       velocityKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -109,6 +112,7 @@ public:
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       offsetKnobs[i].setRange(-0.5, 0.49, 0.01);
       offsetKnobs[i].setValue(0.0);
+      offsetKnobs[i].setDoubleClickReturnValue(true, 0.0);
 
       offsetKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -127,6 +131,7 @@ public:
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       rollKnobs[i].setRange(1, 4, 1);
       rollKnobs[i].setValue(1);
+      rollKnobs[i].setDoubleClickReturnValue(true, 1);
 
       rollKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -146,6 +151,7 @@ public:
                                           STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       probabilityKnobs[i].setRange(0, 1, 0.01);
       probabilityKnobs[i].setValue(1);
+      probabilityKnobs[i].setDoubleClickReturnValue(true, 1);
 
       probabilityKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -160,11 +166,12 @@ public:
                            juce::NotificationType::dontSendNotification);
     addAndMakeVisible(alternateLabel);
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
-      alternateKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
+      alternateKnobs[i].setSliderStyle(juce::Slider::LinearVertical);
       alternateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       alternateKnobs[i].setRange(1, 4, 1);
       alternateKnobs[i].setValue(1);
+      alternateKnobs[i].setDoubleClickReturnValue(true, 1);
 
       alternateKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -208,7 +215,7 @@ public:
       probabilityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
                                     STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       alternateKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
-                                    STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     }
   }
 
