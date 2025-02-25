@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.22)
 
 # Version is needed by JUCE.
-project(AudioPlugin VERSION 0.1.0)
+project(AudioPlugin VERSION 0.2.1)
 
 # Adding a directory with the library/application name as a subfolder of the
 # include folder is a good practice. It helps avoid name clashes later on.
 set(INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/E3Seq")
+
+
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d")
+configure_file(
+    ${INCLUDE_DIR}/Utility.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Utility.h
+)
 
 # Adds a plugin target (that's basically what the Projucer does).
 # doc: https://github.com/juce-framework/JUCE/blob/master/docs/CMake%20API.md
@@ -37,6 +44,8 @@ target_sources(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE 
+        ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # Links to all necessary dependencies. The present ones are recommended by JUCE.
@@ -57,6 +66,8 @@ target_compile_definitions(${PROJECT_NAME}
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
 )
+
+
 
 # Enables all warnings and treats warnings as errors.
 # This needs to be set up only for your projects, not 3rd party

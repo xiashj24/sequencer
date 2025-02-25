@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include <juce_audio_utils/juce_audio_utils.h>  // MidiKeyboard component
 #include "TrackComponent.h"
+#include "Utility.h"
 
 // TODO: add version display
 
@@ -58,9 +59,15 @@ private:
   void showHelpPopup() {
     juce::AlertWindow::showMessageBoxAsync(
         juce::AlertWindow::InfoIcon, "Help",
-        "Space key: toggle stop/continue\n"
-        "Double click or alt+click on any parameter to reset to its default "
-        "value.\n");
+        "Plugin version: " + juce::String{PLUGIN_VERSION.data()} +
+            "\n"
+            "Build date: " +
+            juce::String{BUILD_DATE.data()} +
+            "\n\n"
+            "Tips:\n"
+            "Space key: toggle stop/continue\n"
+            "Double click or alt+click on any parameter to reset to default\n"
+            "\n");
   }
 
   juce::MidiKeyboardComponent onScreenKeyboard;

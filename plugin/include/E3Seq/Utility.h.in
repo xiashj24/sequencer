@@ -1,0 +1,7 @@
+#pragma once
+#include <string_view>
+
+namespace audio_plugin {
+constexpr std::string_view PLUGIN_VERSION = "0.2.1";
+constexpr std::string_view BUILD_DATE = "2025-02-25";
+}  // namespace AudioPlugin
