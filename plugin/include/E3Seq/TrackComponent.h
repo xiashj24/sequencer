@@ -50,12 +50,12 @@ public:
       noteKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       noteKnobs[i].setRange(21, 127, 1);
-      noteKnobs[i].setValue(DEFAULT_NOTE);
-      noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
       noteKnobs[i].textFromValueFunction = [](double value) {
         return juce::MidiMessage::getMidiNoteName(static_cast<int>(value), true,
                                                   true, 4);
       };
+      noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
+      noteKnobs[i].setValue(DEFAULT_NOTE);
 
       // TODO: text show note name instead of number
 
