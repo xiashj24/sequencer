@@ -52,6 +52,11 @@ public:
       noteKnobs[i].setRange(21, 127, 1);
       noteKnobs[i].setValue(DEFAULT_NOTE);
       noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
+      noteKnobs[i].textFromValueFunction = [](double value) {
+        return juce::MidiMessage::getMidiNoteName(static_cast<int>(value), true,
+                                                  true, 4);
+      };
+
       // TODO: text show note name instead of number
 
       noteKnobs[i].onValueChange = [this, i] {
