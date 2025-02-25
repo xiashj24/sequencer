@@ -6,6 +6,7 @@ namespace Sequencer {
 // real-time thread
 // better have a solution for that
 
+// put a MIDI message into the buffer based on its timestamp
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
   if (tick < length_ * TICKS_PER_STEP - half_step_ticks) {
@@ -17,13 +18,19 @@ void Track::renderMidiMessage(juce::MidiMessage message) {
 }
 
 void Track::renderStep(int index) {
-  auto step = steps_[index];
+  auto& step = steps_[index];
   if (step.enabled) {
+    // alternate check
+    if ((step.count++) % step.alternate != 0) {
+      return;
+    }
+
     // probability check
     if (juce::Random::getSystemRandom().nextDouble() >= step.probability) {
       return;
     }
 
+    // start of the note
     int note_on_tick = static_cast<int>((index + step.offset) * TICKS_PER_STEP);
     int note_off_tick =
         static_cast<int>((index + step.offset + step.gate) * TICKS_PER_STEP);
@@ -38,6 +45,7 @@ void Track::renderStep(int index) {
     note_on_message.setTimeStamp(note_on_tick);
     renderMidiMessage(note_on_message);
 
+    // roll
     for (int i = 1; i < step.roll; i++) {
       int roll_tick =
           note_on_tick + static_cast<int>((note_off_tick - note_on_tick) *
@@ -48,11 +56,13 @@ void Track::renderStep(int index) {
       roll_note_off_message.setTimeStamp(roll_tick);
       juce::MidiMessage roll_note_on_message = juce::MidiMessage::noteOn(
           channel_, step.note, (juce::uint8)step.velocity);
-      roll_note_on_message.setTimeStamp(roll_tick);
+      roll_note_on_message.setTimeStamp(
+          roll_tick);  // should NoteOff and NoteOn be separated by 1 tick?
       renderMidiMessage(roll_note_off_message);
       renderMidiMessage(roll_note_on_message);
     }
 
+    // end of the note
     juce::MidiMessage note_off_message = juce::MidiMessage::noteOff(
         channel_, step.note, (juce::uint8)step.velocity);
     note_off_message.setTimeStamp(note_off_tick);

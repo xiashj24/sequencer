@@ -44,18 +44,18 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
-    startButton.setButtonText(juce::String::fromUTF8(u8"▶Start"));
+    startButton.setButtonText(juce::String::fromUTF8("▶Start"));
     startButton.onClick = [this] {
       processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
                                    0.001);
     };
     addAndMakeVisible(startButton);
 
-    stopButton.setButtonText(juce::String::fromUTF8(u8"⏹Stop"));
+    stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
     stopButton.onClick = [this] { processorRef.sequencer.stop(); };
     addAndMakeVisible(stopButton);
 
-    continueButton.setButtonText(juce::String::fromUTF8(u8"⏭Cont"));
+    continueButton.setButtonText(juce::String::fromUTF8("⏭Cont"));
     continueButton.onClick = [this] { processorRef.sequencer.resume(); };
     addAndMakeVisible(continueButton);
   }

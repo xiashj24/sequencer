@@ -55,7 +55,7 @@ public:
 
       noteKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.note = (int)noteKnobs[i].getValue();
+        step.note = static_cast<int>(noteKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
       addAndMakeVisible(noteKnobs[i]);
@@ -68,7 +68,7 @@ public:
       gateKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       gateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      gateKnobs[i].setRange(0.05, 1.0, 0.01);
+      gateKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
       gateKnobs[i].setValue(DEFAULT_GATE);
 
       gateKnobs[i].onValueChange = [this, i] {
@@ -93,7 +93,7 @@ public:
 
       velocityKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.velocity = (int)velocityKnobs[i].getValue();
+        step.velocity = static_cast<int>(velocityKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
 
@@ -130,7 +130,7 @@ public:
 
       rollKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.roll = (int)rollKnobs[i].getValue();
+        step.roll = static_cast<int>(rollKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
       addAndMakeVisible(rollKnobs[i]);
@@ -154,6 +154,25 @@ public:
       };
       addAndMakeVisible(probabilityKnobs[i]);
     }
+
+    // alternate
+    alternateLabel.setText("alternate",
+                           juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(alternateLabel);
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+      alternateKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
+      alternateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+                                        STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+      alternateKnobs[i].setRange(1, 4, 1);
+      alternateKnobs[i].setValue(1);
+
+      alternateKnobs[i].onValueChange = [this, i] {
+        auto step = trackRef.getStepAtIndex(i);
+        step.alternate = static_cast<int>(alternateKnobs[i].getValue());
+        trackRef.setStepAtIndex(i, step);
+      };
+      addAndMakeVisible(alternateKnobs[i]);
+    }
   }
 
   void resized() override {
@@ -170,6 +189,8 @@ public:
                         STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     probabilityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
                                STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+    alternateLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
+                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
 
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
       int x = (i + 1) * (STEP_BUTTON_WIDTH + STEP_BUTTON_SPACING);
@@ -185,6 +206,8 @@ public:
       rollKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
                              STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       probabilityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
+                                    STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+      alternateKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
                                     STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     }
   }
@@ -207,7 +230,7 @@ private:
     } else {
       setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
                   STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
-              STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6);
+              STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 7);
       trackCollapseButton.setButtonText("Track " +
                                         juce::String(trackNumber_ + 1) + " ▼");
     }
@@ -220,6 +243,7 @@ private:
   juce::Label offsetLabel;
   juce::Label rollLabel;
   juce::Label probabilityLabel;
+  juce::Label alternateLabel;
 
   juce::TextButton stepButtons[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider noteKnobs[STEP_SEQ_DEFAULT_LENGTH];
@@ -228,6 +252,7 @@ private:
   juce::Slider offsetKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider rollKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider probabilityKnobs[STEP_SEQ_DEFAULT_LENGTH];
+  juce::Slider alternateKnobs[STEP_SEQ_DEFAULT_LENGTH];
 };
 
 }  // namespace audio_plugin
