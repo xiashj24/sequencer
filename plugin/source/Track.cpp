@@ -33,7 +33,7 @@ void Track::renderStep(int index) {
     // start of the note
     int note_on_tick = static_cast<int>((index + step.offset) * TICKS_PER_STEP);
     int note_off_tick =
-        static_cast<int>((index + step.offset + step.gate) * TICKS_PER_STEP);
+        static_cast<int>((index + step.offset + step.length) * TICKS_PER_STEP);
 
     // NoteOn message should always go to the first run
 #if JUCE_DEBUG

@@ -67,24 +67,24 @@ public:
       addAndMakeVisible(noteKnobs[i]);
     }
 
-    // gate
-    gateLabel.setText("gate", juce::NotificationType::dontSendNotification);
-    addAndMakeVisible(gateLabel);
+    // length
+    lengthLabel.setText("length", juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(lengthLabel);
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
-      gateKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
-      gateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+      lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
+      lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      gateKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
-      gateKnobs[i].setValue(DEFAULT_GATE);
-      gateKnobs[i].setDoubleClickReturnValue(true, DEFAULT_GATE);
+      lengthKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
+      lengthKnobs[i].setValue(DEFAULT_GATE);
+      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_GATE);
 
-      gateKnobs[i].onValueChange = [this, i] {
+      lengthKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.gate = gateKnobs[i].getValue();
+        step.length = lengthKnobs[i].getValue();
         trackRef.setStepAtIndex(i, step);
       };
 
-      addAndMakeVisible(gateKnobs[i]);
+      addAndMakeVisible(lengthKnobs[i]);
     }
 
     // velocity
@@ -191,7 +191,7 @@ public:
     // layout
     trackCollapseButton.setBounds(0, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
     noteLabel.setBounds(0, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    gateLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT, STEP_BUTTON_WIDTH,
+    lengthLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT, STEP_BUTTON_WIDTH,
                         KNOB_HEIGHT);
     velocityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
@@ -209,7 +209,7 @@ public:
       stepButtons[i].setBounds(x, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
       noteKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH,
                              KNOB_HEIGHT);
-      gateKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
+      lengthKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
                              STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       velocityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
@@ -253,7 +253,7 @@ private:
 
   juce::TextButton trackCollapseButton;
   juce::Label noteLabel;
-  juce::Label gateLabel;
+  juce::Label lengthLabel;
   juce::Label velocityLabel;
   juce::Label offsetLabel;
   juce::Label rollLabel;
@@ -262,7 +262,7 @@ private:
 
   juce::TextButton stepButtons[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider noteKnobs[STEP_SEQ_DEFAULT_LENGTH];
-  juce::Slider gateKnobs[STEP_SEQ_DEFAULT_LENGTH];
+  juce::Slider lengthKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider velocityKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider offsetKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider rollKnobs[STEP_SEQ_DEFAULT_LENGTH];

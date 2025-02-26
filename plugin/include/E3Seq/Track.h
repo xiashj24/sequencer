@@ -28,13 +28,11 @@
 
 #define STEP_SEQ_MAX_LENGTH 16  // TODO: support as large as 128
 #define STEP_SEQ_DEFAULT_LENGTH 16
-#define MAX_POLYPHONY 8
 #define MAX_MOTION_SLOTS 8  // not used now
 #define TICKS_PER_STEP 24   // one step is broken into {TICKS_PER_STEP} ticks
 
-// note: TICKS_PER_STEP over 24 do not make much sense since time keeping
-// functions like processBlock() or MIDI callbacks are not called frequently
-// enough
+// TICKS_PER_STEP over 24 make little sense since tick() is not
+// called frequently enough to achieve such precision
 
 namespace Sequencer {
 
