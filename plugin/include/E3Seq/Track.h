@@ -44,17 +44,17 @@ public:
         int len = STEP_SEQ_DEFAULT_LENGTH,
         PlayMode mode = PlayMode::Forward)
       : channel_(channel),
-        length_(len),
+        trackLength_(len),
         playMode_(mode),
         enabled_(true),
         tick_(0) {}
 
   void setEnabled(bool enabled) { enabled_ = enabled; }
   void setChannel(int channel) { channel_ = channel; }
-  void setLength(int length) { length_ = length; }
+  void setLength(int length) { trackLength_ = length; }
   int getChannel() const { return channel_; }
   bool isEnabled() const { return enabled_; }
-  int getLength() const { return length_; }
+  int getLength() const { return trackLength_; }
 
   // caller should register a callback to receive Midi messages
   std::function<void(juce::MidiMessage msg)> sendMidiMessage;
@@ -74,7 +74,7 @@ private:
   int channel_;
 
   // track parameters as seen by the user
-  int length_;
+  int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
   [[maybe_unused]] double swing_;  // TODO: implement swing
   [[maybe_unused]] bool resync_to_longest_track_;

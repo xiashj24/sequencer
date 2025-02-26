@@ -14,7 +14,6 @@
 
 namespace Sequencer {
 
-// TODO: show offset names on UI labels
 enum class Offset {
   _1o384,
   _1o192,

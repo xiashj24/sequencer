@@ -9,10 +9,10 @@ namespace Sequencer {
 // put a MIDI message into the buffer based on its timestamp
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
-  if (tick < length_ * TICKS_PER_STEP - half_step_ticks) {
+  if (tick < trackLength_ * TICKS_PER_STEP - half_step_ticks) {
     firstRun_.addEvent(message);
   } else {
-    message.setTimeStamp(tick - length_ * TICKS_PER_STEP);
+    message.setTimeStamp(tick - trackLength_ * TICKS_PER_STEP);
     secondRun_.addEvent(message);
   }
 }
@@ -37,7 +37,7 @@ void Track::renderStep(int index) {
 
     // NoteOn message should always go to the first run
 #if JUCE_DEBUG
-    jassert(note_on_tick < length_ * TICKS_PER_STEP - half_step_ticks);
+    jassert(note_on_tick < trackLength_ * TICKS_PER_STEP - half_step_ticks);
 #endif
 
     juce::MidiMessage note_on_message = juce::MidiMessage::noteOn(
@@ -97,7 +97,7 @@ void Track::tick() {
   // advance ticks and wrap up from (length-0.5) to (-0.5) step
   // because the first step could start from negative ticks
   tick_ += 1;
-  if (tick_ == length_ * TICKS_PER_STEP - half_step_ticks) {
+  if (tick_ == trackLength_ * TICKS_PER_STEP - half_step_ticks) {
     tick_ = -half_step_ticks;
     // move the second run's Midi events to the first run
     firstRun_.swapWith(secondRun_);

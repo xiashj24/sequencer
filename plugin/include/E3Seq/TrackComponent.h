@@ -10,6 +10,12 @@ namespace audio_plugin {
 #define KNOB_HEIGHT 90
 #define KNOB_TEXT_HEIGHT 20
 
+// (since C++17) shared across different translation units
+inline const juce::String OffsetTable[TICKS_PER_STEP] = {
+    "-1/2", "-11/24", "-5/12", "-3/8",  "-1/3", "-7/24", "-1/4", "-5/24",
+    "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
+    "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
+
 class TrackComponent : public juce::Component {
 public:
   TrackComponent(AudioPluginAudioProcessor& p, int trackNumber)
@@ -49,11 +55,11 @@ public:
       noteKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
       noteKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      noteKnobs[i].setRange(21, 127, 1);
       noteKnobs[i].textFromValueFunction = [](double value) {
         return juce::MidiMessage::getMidiNoteName(static_cast<int>(value), true,
                                                   true, 4);
       };
+      noteKnobs[i].setRange(21, 127, 1);
       noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
       noteKnobs[i].setValue(DEFAULT_NOTE);
 
@@ -73,7 +79,7 @@ public:
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
       lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
-                                   STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+                                     STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       lengthKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
       lengthKnobs[i].setValue(DEFAULT_GATE);
       lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_GATE);
@@ -115,6 +121,12 @@ public:
       offsetKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       offsetKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+
+      offsetKnobs[i].textFromValueFunction = [](double value) {
+        int index = static_cast<int>(value * TICKS_PER_STEP) + 12;
+        return OffsetTable[index];
+      };
+
       offsetKnobs[i].setRange(-0.5, 0.49, 0.01);
       offsetKnobs[i].setValue(0.0);
       offsetKnobs[i].setDoubleClickReturnValue(true, 0.0);
@@ -191,8 +203,8 @@ public:
     // layout
     trackCollapseButton.setBounds(0, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
     noteLabel.setBounds(0, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    lengthLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT, STEP_BUTTON_WIDTH,
-                        KNOB_HEIGHT);
+    lengthLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
+                          STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     velocityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     offsetLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
@@ -210,7 +222,7 @@ public:
       noteKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH,
                              KNOB_HEIGHT);
       lengthKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
-                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+                               STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       velocityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       offsetKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
