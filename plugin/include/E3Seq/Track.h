@@ -67,6 +67,8 @@ public:
   Step getStepAtIndex(int index) const { return steps_[index]; }
   void setStepAtIndex(int index, Step step) { steps_[index] = step; }
 
+  int getCurrentStepIndex() const;
+
   // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids,
   // etc.)
 

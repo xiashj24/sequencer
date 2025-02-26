@@ -16,12 +16,14 @@ inline const juce::String OffsetTable[TICKS_PER_STEP] = {
     "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
     "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
 
-class TrackComponent : public juce::Component {
+class TrackComponent : public juce::Component, private juce::Timer {
 public:
   TrackComponent(AudioPluginAudioProcessor& p, int trackNumber)
       : trackRef(p.sequencer.getTrack(trackNumber)), trackNumber_(trackNumber) {
     // look and feel
     // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
+
+    startTimer(10);
 
     setCollapsed(true);
     addAndMakeVisible(trackCollapseButton);
@@ -42,6 +44,14 @@ public:
       stepButtons[i].onClick = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
         step.enabled = stepButtons[i].getToggleState();
+        // stepButtons[i].setAlpha(step.enabled ? 1.f : DISABLED_ALPHA);
+        noteKnobs[i].setVisible(step.enabled);
+        lengthKnobs[i].setVisible(step.enabled);
+        velocityKnobs[i].setVisible(step.enabled);
+        offsetKnobs[i].setVisible(step.enabled);
+        probabilityKnobs[i].setVisible(step.enabled);
+        rollKnobs[i].setVisible(step.enabled);
+        alternateKnobs[i].setVisible(step.enabled);
         trackRef.setStepAtIndex(i, step);
       };
       addAndMakeVisible(stepButtons[i]);
@@ -70,7 +80,7 @@ public:
         step.note = static_cast<int>(noteKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
-      addAndMakeVisible(noteKnobs[i]);
+      addChildComponent(noteKnobs[i]);
     }
 
     // length
@@ -90,7 +100,7 @@ public:
         trackRef.setStepAtIndex(i, step);
       };
 
-      addAndMakeVisible(lengthKnobs[i]);
+      addChildComponent(lengthKnobs[i]);
     }
 
     // velocity
@@ -111,7 +121,7 @@ public:
         trackRef.setStepAtIndex(i, step);
       };
 
-      addAndMakeVisible(velocityKnobs[i]);
+      addChildComponent(velocityKnobs[i]);
     }
 
     // offset
@@ -121,7 +131,6 @@ public:
       offsetKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       offsetKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-
       offsetKnobs[i].textFromValueFunction = [](double value) {
         int index = static_cast<int>(value * TICKS_PER_STEP) + 12;
         return OffsetTable[index];
@@ -136,7 +145,7 @@ public:
         step.offset = offsetKnobs[i].getValue();
         trackRef.setStepAtIndex(i, step);
       };
-      addAndMakeVisible(offsetKnobs[i]);
+      addChildComponent(offsetKnobs[i]);
     }
 
     // roll
@@ -155,7 +164,7 @@ public:
         step.roll = static_cast<int>(rollKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
-      addAndMakeVisible(rollKnobs[i]);
+      addChildComponent(rollKnobs[i]);
     }
 
     // probability
@@ -175,7 +184,7 @@ public:
         step.probability = probabilityKnobs[i].getValue();
         trackRef.setStepAtIndex(i, step);
       };
-      addAndMakeVisible(probabilityKnobs[i]);
+      addChildComponent(probabilityKnobs[i]);
     }
 
     // alternate
@@ -195,7 +204,23 @@ public:
         step.alternate = static_cast<int>(alternateKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
-      addAndMakeVisible(alternateKnobs[i]);
+      addChildComponent(alternateKnobs[i]);
+    }
+  }
+
+  // put all dynamic GUI processing here?
+  // maybe try some async animation stuff?
+  void timerCallback() override final {
+    int playhead_index = trackRef.getCurrentStepIndex();
+
+    for (int i = 0; i < STEP_SEQ_MAX_LENGTH; ++i) {
+      if (i == playhead_index)
+      {
+        stepButtons[i].setAlpha(1.f);
+      }
+      else {
+        stepButtons[i].setAlpha(0.8f);
+      }
     }
   }
 

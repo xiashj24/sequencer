@@ -7,6 +7,11 @@ namespace Sequencer {
 // better have a solution for that
 
 // put a MIDI message into the buffer based on its timestamp
+
+int Track::getCurrentStepIndex() const {
+  return (tick_ + half_step_ticks) / TICKS_PER_STEP;
+}
+
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
   if (tick < trackLength_ * TICKS_PER_STEP - half_step_ticks) {
@@ -78,7 +83,7 @@ void Track::returnToStart() {
 
 void Track::tick() {
   if (this->enabled_) {
-    int index = (tick_ + half_step_ticks) / TICKS_PER_STEP;
+    int index = getCurrentStepIndex();
     int note_on_tick_of_current_step =
         static_cast<int>((index + steps_[index].offset) * TICKS_PER_STEP);
 
