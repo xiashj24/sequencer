@@ -18,7 +18,9 @@ inline const juce::String OffsetTable[TICKS_PER_STEP] = {
 
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
-  TrackComponent(AudioPluginAudioProcessor& p, int trackNumber)
+  TrackComponent(AudioPluginAudioProcessor& p,
+                 int trackNumber,
+                 juce::Colour trackColor)
       : trackRef(p.sequencer.getTrack(trackNumber)), trackNumber_(trackNumber) {
     // look and feel
     // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
@@ -39,7 +41,7 @@ public:
       stepButtons[i].setButtonText(juce::String(i + 1));
       stepButtons[i].setClickingTogglesState(true);
       stepButtons[i].setColour(juce::TextButton::ColourIds::buttonOnColourId,
-                               juce::Colours::orangered);
+                               trackColor);
 
       stepButtons[i].onClick = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
@@ -214,12 +216,10 @@ public:
     int playhead_index = trackRef.getCurrentStepIndex();
 
     for (int i = 0; i < STEP_SEQ_MAX_LENGTH; ++i) {
-      if (i == playhead_index)
-      {
+      if (i == playhead_index) {
         stepButtons[i].setAlpha(1.f);
-      }
-      else {
-        stepButtons[i].setAlpha(0.8f);
+      } else {
+        stepButtons[i].setAlpha(0.7f);
       }
     }
   }
