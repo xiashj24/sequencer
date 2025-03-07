@@ -187,8 +187,8 @@ public:
       retriggerKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
 
-      retriggerKnobs[i].textFromValueFunction = [](int value) {
-        int index = value;
+      retriggerKnobs[i].textFromValueFunction = [](double value) {
+        int index = static_cast<int>(value);
         return RetriggerText[index];
       };
       retriggerKnobs[i].setRange(0, 12, 1);
