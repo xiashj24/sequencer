@@ -78,8 +78,8 @@ private:
   // track parameters as seen by the user
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
-  [[maybe_unused]] double swing_;  // TODO: implement swing
-  [[maybe_unused]] bool resync_to_longest_track_; // or master length
+  [[maybe_unused]] float swing_;                   // TODO: implement swing
+  [[maybe_unused]] bool resync_to_longest_track_;  // or master length
 
   // function-related variables
   bool enabled_;
@@ -93,9 +93,14 @@ private:
   // timestamp is in ticks (not seconds or samples)
   void renderMidiMessage(juce::MidiMessage message);
 
-  // invariant: MIDI events are always sorted by timestamp
+  int getStepNoteOnTick(int index) const;
+  int getStepNoteOffTick(int index) const;
+
+  // double MIDI buffer loosely inspired by the endless scrolling
+  // background technique in early arcade games
+  // invariant: MIDI messages are always sorted by timestamp
   // note: when porting to Spark, change from juce::MidiMessageSequence to a
-  // simpler custom class
+  // simpler data structure
   juce::MidiMessageSequence firstRun_;
   juce::MidiMessageSequence secondRun_;
 };

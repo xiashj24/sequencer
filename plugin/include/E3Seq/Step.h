@@ -16,23 +16,23 @@ namespace Sequencer {
 // TODO: use Note[polyphony] inside Step
 struct Note {
   int number;
-  double length;
+  float length;
   int velocity;
-  double offset;
+  float offset;
 };
 
 struct Step {
   int note = DEFAULT_NOTE;
-  double length = DEFAULT_GATE;  // note: length can be greater than 1 but
+  float length = DEFAULT_GATE;  // note: length can be greater than 1 but
                                  // should be smaller than track length
   bool tie = false;  // or use something like length > MAX_GATE ?
                      // tie should only be used for mono tracks
   int velocity = DEFAULT_VELOCITY;
-  double offset = 0.0;
+  float offset = 0.0;
 
-  double retrigger_interval = 0.0;  // in fractional steps (internally quantized
+  float retrigger_interval = 0.0;  // in fractional steps (internally quantized
                                   // to ticks), 0.0 means no retrigger
-  double probability = 1.0;
+  float probability = 1.0;
   int alternate = 1;
   int count = 0;
 

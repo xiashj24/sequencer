@@ -5,12 +5,20 @@ namespace Sequencer {
 // TODO: setStepAtIndex will cause a data race between the message thread and
 // the audio thread, better have a (non-blocking) solution for that
 
-// put a MIDI message into the buffer based on its timestamp
-
 int Track::getCurrentStepIndex() const {
   return (tick_ + half_step_ticks) / TICKS_PER_STEP;
 }
 
+int Track::getStepNoteOnTick(int index) const {
+  return static_cast<int>((index + steps_[index].offset) * TICKS_PER_STEP);
+}
+
+int Track::getStepNoteOffTick(int index) const {
+  return static_cast<int>(
+      (index + steps_[index].offset + steps_[index].length) * TICKS_PER_STEP);
+}
+
+// insert a future MIDI message into the MIDI buffer based on its timestamp
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
   if (tick < trackLength_ * TICKS_PER_STEP - half_step_ticks) {
@@ -30,20 +38,22 @@ void Track::renderStep(int index) {
     }
 
     // probability check
-    if (juce::Random::getSystemRandom().nextDouble() >= step.probability) {
+    if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {
       return;
     }
 
-    // start of the note
-    int note_on_tick = static_cast<int>((index + step.offset) * TICKS_PER_STEP);
-    int note_off_tick =
-        static_cast<int>((index + step.offset + step.length) * TICKS_PER_STEP);
+    int note_on_tick = getStepNoteOnTick(index);
+    int note_off_tick = getStepNoteOffTick(index);
+
+    // force note off before the next active step
+    // TODO: is this necessary?
 
     // note on message should always go to the first run
 #if JUCE_DEBUG
     jassert(note_on_tick < trackLength_ * TICKS_PER_STEP - half_step_ticks);
 #endif
 
+    // note on
     juce::MidiMessage note_on_message = juce::MidiMessage::noteOn(
         channel_, step.note, (juce::uint8)step.velocity);
     note_on_message.setTimeStamp(note_on_tick);
@@ -67,7 +77,7 @@ void Track::renderStep(int index) {
       }
     }
 
-    // end of the note
+    // note off
     juce::MidiMessage note_off_message = juce::MidiMessage::noteOff(
         channel_, step.note, (juce::uint8)step.velocity);
     note_off_message.setTimeStamp(note_off_tick);
@@ -84,10 +94,9 @@ void Track::returnToStart() {
 void Track::tick() {
   if (this->enabled_) {
     int index = getCurrentStepIndex();
-    int note_on_tick_of_current_step =
-        static_cast<int>((index + steps_[index].offset) * TICKS_PER_STEP);
+    int note_on_tick = getStepNoteOnTick(index);
 
-    if (note_on_tick_of_current_step == tick_) {
+    if (note_on_tick == tick_) {
       renderStep(index);
     }
 

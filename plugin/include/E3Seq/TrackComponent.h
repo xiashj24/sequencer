@@ -30,19 +30,19 @@ inline juce::String RetriggerText[TICKS_PER_STEP / 2 + 1] = {"Off",
                                                              "1/12",
                                                              "1/24"};
 
-inline double RetriggerValue[TICKS_PER_STEP / 2 + 1] = {0.0,  // retrigger off
-                                                        12.0 / TICKS_PER_STEP,
-                                                        11.0 / TICKS_PER_STEP,
-                                                        10.0 / TICKS_PER_STEP,
-                                                        9.0 / TICKS_PER_STEP,
-                                                        8.0 / TICKS_PER_STEP,
-                                                        7.0 / TICKS_PER_STEP,
-                                                        6.0 / TICKS_PER_STEP,
-                                                        5.0 / TICKS_PER_STEP,
-                                                        4.0 / TICKS_PER_STEP,
-                                                        3.0 / TICKS_PER_STEP,
-                                                        2.0 / TICKS_PER_STEP,
-                                                        1.0 / TICKS_PER_STEP};
+inline float RetriggerValue[TICKS_PER_STEP / 2 + 1] = {0.f,  // retrigger off
+                                                        12.f / TICKS_PER_STEP,
+                                                        11.f / TICKS_PER_STEP,
+                                                        10.f / TICKS_PER_STEP,
+                                                        9.f / TICKS_PER_STEP,
+                                                        8.f / TICKS_PER_STEP,
+                                                        7.f / TICKS_PER_STEP,
+                                                        6.f / TICKS_PER_STEP,
+                                                        5.f / TICKS_PER_STEP,
+                                                        4.f / TICKS_PER_STEP,
+                                                        3.f / TICKS_PER_STEP,
+                                                        2.f / TICKS_PER_STEP,
+                                                        1.f / TICKS_PER_STEP};
 
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
@@ -126,7 +126,7 @@ public:
 
       lengthKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.length = lengthKnobs[i].getValue();
+        step.length = static_cast<float>(lengthKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
 
@@ -172,7 +172,7 @@ public:
 
       offsetKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.offset = offsetKnobs[i].getValue();
+        step.offset = static_cast<float>(offsetKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
       addChildComponent(offsetKnobs[i]);
@@ -219,7 +219,7 @@ public:
 
       probabilityKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.probability = probabilityKnobs[i].getValue();
+        step.probability = static_cast<float>(probabilityKnobs[i].getValue());
         trackRef.setStepAtIndex(i, step);
       };
       addChildComponent(probabilityKnobs[i]);
