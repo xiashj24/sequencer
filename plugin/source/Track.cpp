@@ -2,9 +2,8 @@
 
 namespace Sequencer {
 
-// TODO: setStepAtIndex will cause data race between the message thread and
-// real-time thread
-// better have a solution for that
+// TODO: setStepAtIndex will cause a data race between the message thread and
+// the audio thread, better have a (non-blocking) solution for that
 
 // put a MIDI message into the buffer based on its timestamp
 
@@ -40,7 +39,7 @@ void Track::renderStep(int index) {
     int note_off_tick =
         static_cast<int>((index + step.offset + step.length) * TICKS_PER_STEP);
 
-    // NoteOn message should always go to the first run
+    // note on message should always go to the first run
 #if JUCE_DEBUG
     jassert(note_on_tick < trackLength_ * TICKS_PER_STEP - half_step_ticks);
 #endif
@@ -50,21 +49,22 @@ void Track::renderStep(int index) {
     note_on_message.setTimeStamp(note_on_tick);
     renderMidiMessage(note_on_message);
 
-    // roll
-    for (int i = 1; i < step.roll; i++) {
-      int roll_tick =
-          note_on_tick + static_cast<int>((note_off_tick - note_on_tick) *
-                                          ((double)i / step.roll));
-
-      juce::MidiMessage roll_note_off_message = juce::MidiMessage::noteOff(
-          channel_, step.note, (juce::uint8)step.velocity);
-      roll_note_off_message.setTimeStamp(roll_tick);
-      juce::MidiMessage roll_note_on_message = juce::MidiMessage::noteOn(
-          channel_, step.note, (juce::uint8)step.velocity);
-      roll_note_on_message.setTimeStamp(
-          roll_tick);  // should NoteOff and NoteOn be separated by 1 tick?
-      renderMidiMessage(roll_note_off_message);
-      renderMidiMessage(roll_note_on_message);
+    // retrigger
+    if (step.retrigger_interval > 0.0) {
+      int retrigger_interval_in_ticks =
+          static_cast<int>(step.retrigger_interval * TICKS_PER_STEP);
+      for (int tick = note_on_tick + retrigger_interval_in_ticks;
+           tick < note_off_tick; tick += retrigger_interval_in_ticks) {
+        juce::MidiMessage retrigger_note_off_message =
+            juce::MidiMessage::noteOff(channel_, step.note,
+                                       (juce::uint8)step.velocity);
+        retrigger_note_off_message.setTimeStamp(tick);
+        juce::MidiMessage retrigger_note_on_message = juce::MidiMessage::noteOn(
+            channel_, step.note, (juce::uint8)step.velocity);
+        retrigger_note_on_message.setTimeStamp(tick);
+        renderMidiMessage(retrigger_note_off_message);
+        renderMidiMessage(retrigger_note_on_message);
+      }
     }
 
     // end of the note

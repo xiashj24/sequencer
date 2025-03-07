@@ -10,11 +10,39 @@ namespace audio_plugin {
 #define KNOB_HEIGHT 90
 #define KNOB_TEXT_HEIGHT 20
 
-// (since C++17) shared across different translation units
-inline const juce::String OffsetTable[TICKS_PER_STEP] = {
+// (since C++17) shared const across different translation units
+inline juce::String OffsetText[TICKS_PER_STEP] = {
     "-1/2", "-11/24", "-5/12", "-3/8",  "-1/3", "-7/24", "-1/4", "-5/24",
     "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
     "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
+
+inline juce::String RetriggerText[TICKS_PER_STEP / 2 + 1] = {"Off",
+                                                             "1/2",
+                                                             "11/24",
+                                                             "5/12",
+                                                             "3/8",
+                                                             "1/3",
+                                                             "7/24",
+                                                             "1/4",
+                                                             "5/24",
+                                                             "1/6",
+                                                             "1/8",
+                                                             "1/12",
+                                                             "1/24"};
+
+inline double RetriggerValue[TICKS_PER_STEP / 2 + 1] = {0.0,  // retrigger off
+                                                        12.0 / TICKS_PER_STEP,
+                                                        11.0 / TICKS_PER_STEP,
+                                                        10.0 / TICKS_PER_STEP,
+                                                        9.0 / TICKS_PER_STEP,
+                                                        8.0 / TICKS_PER_STEP,
+                                                        7.0 / TICKS_PER_STEP,
+                                                        6.0 / TICKS_PER_STEP,
+                                                        5.0 / TICKS_PER_STEP,
+                                                        4.0 / TICKS_PER_STEP,
+                                                        3.0 / TICKS_PER_STEP,
+                                                        2.0 / TICKS_PER_STEP,
+                                                        1.0 / TICKS_PER_STEP};
 
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
@@ -52,7 +80,7 @@ public:
         velocityKnobs[i].setVisible(step.enabled);
         offsetKnobs[i].setVisible(step.enabled);
         probabilityKnobs[i].setVisible(step.enabled);
-        rollKnobs[i].setVisible(step.enabled);
+        retriggerKnobs[i].setVisible(step.enabled);
         alternateKnobs[i].setVisible(step.enabled);
         trackRef.setStepAtIndex(i, step);
       };
@@ -135,7 +163,7 @@ public:
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       offsetKnobs[i].textFromValueFunction = [](double value) {
         int index = static_cast<int>(value * TICKS_PER_STEP) + 12;
-        return OffsetTable[index];
+        return OffsetText[index];
       };
 
       offsetKnobs[i].setRange(-0.5, 0.49, 0.01);
@@ -150,23 +178,31 @@ public:
       addChildComponent(offsetKnobs[i]);
     }
 
-    // roll
-    rollLabel.setText("roll", juce::NotificationType::dontSendNotification);
-    addAndMakeVisible(rollLabel);
+    // retrigger
+    retriggerLabel.setText("retrigger",
+                           juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(retriggerLabel);
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
-      rollKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
-      rollKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
-                                   STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      rollKnobs[i].setRange(1, 4, 1);
-      rollKnobs[i].setValue(1);
-      rollKnobs[i].setDoubleClickReturnValue(true, 1);
+      retriggerKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
+      retriggerKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+                                        STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
 
-      rollKnobs[i].onValueChange = [this, i] {
+      retriggerKnobs[i].textFromValueFunction = [](int value) {
+        int index = value;
+        return RetriggerText[index];
+      };
+      retriggerKnobs[i].setRange(0, 12, 1);
+      retriggerKnobs[i].setValue(0);
+      retriggerKnobs[i].setDoubleClickReturnValue(true, 1);
+
+      retriggerKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
-        step.roll = static_cast<int>(rollKnobs[i].getValue());
+        int index = static_cast<int>(retriggerKnobs[i].getValue());
+        step.retrigger_interval = RetriggerValue[index];
         trackRef.setStepAtIndex(i, step);
       };
-      addChildComponent(rollKnobs[i]);
+
+      addChildComponent(retriggerKnobs[i]);
     }
 
     // probability
@@ -234,8 +270,8 @@ public:
                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     offsetLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                           STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    rollLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
-                        STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+    retriggerLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
+                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     probabilityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
                                STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     alternateLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
@@ -252,8 +288,8 @@ public:
                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       offsetKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                                STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-      rollKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
-                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+      retriggerKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
+                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       probabilityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 5,
                                     STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       alternateKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
@@ -293,7 +329,7 @@ private:
   juce::Label lengthLabel;
   juce::Label velocityLabel;
   juce::Label offsetLabel;
-  juce::Label rollLabel;
+  juce::Label retriggerLabel;
   juce::Label probabilityLabel;
   juce::Label alternateLabel;
 
@@ -302,7 +338,7 @@ private:
   juce::Slider lengthKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider velocityKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider offsetKnobs[STEP_SEQ_DEFAULT_LENGTH];
-  juce::Slider rollKnobs[STEP_SEQ_DEFAULT_LENGTH];
+  juce::Slider retriggerKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider probabilityKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider alternateKnobs[STEP_SEQ_DEFAULT_LENGTH];
 };

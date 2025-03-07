@@ -79,7 +79,7 @@ private:
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
   [[maybe_unused]] double swing_;  // TODO: implement swing
-  [[maybe_unused]] bool resync_to_longest_track_;
+  [[maybe_unused]] bool resync_to_longest_track_; // or master length
 
   // function-related variables
   bool enabled_;

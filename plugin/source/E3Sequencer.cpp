@@ -2,7 +2,7 @@
 #include <cmath>
 
 // this class is the interface between the underlying sequencer logic and the
-// outside app framework it uses information such as BPM and MIDI clock to
+// outside app framework. It uses information such as BPM and MIDI clock to
 // translate real world time to the "ticks" used by the sequencer
 // ideally users of this class should not need to know about ticks at all
 
