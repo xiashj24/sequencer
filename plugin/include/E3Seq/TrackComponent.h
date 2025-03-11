@@ -16,33 +16,25 @@ inline juce::String OffsetText[TICKS_PER_STEP] = {
     "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
     "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
 
-inline juce::String RetriggerText[TICKS_PER_STEP / 2 + 1] = {"Off",
-                                                             "1/2",
-                                                             "11/24",
-                                                             "5/12",
-                                                             "3/8",
-                                                             "1/3",
-                                                             "7/24",
-                                                             "1/4",
-                                                             "5/24",
-                                                             "1/6",
-                                                             "1/8",
-                                                             "1/12",
-                                                             "1/24"};
+inline juce::String RetriggerText[15] = {"Off", "0.17",  "0.25",  "0.33",  "0.42",
+                                         "0.5", "0.58", "0.67",  "0.75",  "0.83",
+                                         "1",   "1.17",  "1.25", "1.33", "1.5"};
 
-inline float RetriggerValue[TICKS_PER_STEP / 2 + 1] = {0.f,  // retrigger off
-                                                        12.f / TICKS_PER_STEP,
-                                                        11.f / TICKS_PER_STEP,
-                                                        10.f / TICKS_PER_STEP,
-                                                        9.f / TICKS_PER_STEP,
-                                                        8.f / TICKS_PER_STEP,
-                                                        7.f / TICKS_PER_STEP,
-                                                        6.f / TICKS_PER_STEP,
-                                                        5.f / TICKS_PER_STEP,
-                                                        4.f / TICKS_PER_STEP,
-                                                        3.f / TICKS_PER_STEP,
-                                                        2.f / TICKS_PER_STEP,
-                                                        1.f / TICKS_PER_STEP};
+inline float RetriggerValue[15] = {0.f,  // retrigger off
+                                   4.f / TICKS_PER_STEP,
+                                   6.f / TICKS_PER_STEP,
+                                   8.f / TICKS_PER_STEP,
+                                   10.f / TICKS_PER_STEP,
+                                   12.f / TICKS_PER_STEP,
+                                   14.f / TICKS_PER_STEP,
+                                   16.f / TICKS_PER_STEP,
+                                   18.f / TICKS_PER_STEP,
+                                   20.f / TICKS_PER_STEP,
+                                   24.f / TICKS_PER_STEP,
+                                   28.f / TICKS_PER_STEP,
+                                   30.f / TICKS_PER_STEP,
+                                   32.f / TICKS_PER_STEP,
+                                   36.f / TICKS_PER_STEP};
 
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
@@ -191,7 +183,7 @@ public:
         int index = static_cast<int>(value);
         return RetriggerText[index];
       };
-      retriggerKnobs[i].setRange(0, 12, 1);
+      retriggerKnobs[i].setRange(0, 14, 1);
       retriggerKnobs[i].setValue(0);
       retriggerKnobs[i].setDoubleClickReturnValue(true, 1);
 
