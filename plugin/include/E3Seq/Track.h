@@ -34,6 +34,7 @@
 // TICKS_PER_STEP over 24 make little sense since tick() is not
 // called frequently enough to achieve such precision
 
+
 namespace Sequencer {
 
 class Track {
@@ -42,10 +43,11 @@ public:
 
   Track(int channel = 1,
         int len = STEP_SEQ_DEFAULT_LENGTH,
-        PlayMode mode = PlayMode::Forward)
+        PlayMode mode = PlayMode::Forward, bool legato = false)
       : channel_(channel),
         trackLength_(len),
         playMode_(mode),
+        legato_(legato),
         enabled_(true),
         tick_(0) {}
 
@@ -78,6 +80,7 @@ private:
   // track parameters as seen by the user
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
+  bool legato_;
   [[maybe_unused]] float swing_;                   // TODO: implement swing
   [[maybe_unused]] bool resync_to_longest_track_;  // or master length
 

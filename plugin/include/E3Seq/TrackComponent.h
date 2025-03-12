@@ -16,9 +16,9 @@ inline juce::String OffsetText[TICKS_PER_STEP] = {
     "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
     "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
 
-inline juce::String RetriggerText[15] = {"Off", "0.17",  "0.25",  "0.33",  "0.42",
-                                         "0.5", "0.58", "0.67",  "0.75",  "0.83",
-                                         "1",   "1.17",  "1.25", "1.33", "1.5"};
+inline juce::String RetriggerText[15] = {"Off", "0.17", "0.25", "0.33", "0.42",
+                                         "0.5", "0.58", "0.67", "0.75", "0.83",
+                                         "1",   "1.17", "1.25", "1.33", "1.5"};
 
 inline float RetriggerValue[15] = {0.f,  // retrigger off
                                    4.f / TICKS_PER_STEP,
@@ -112,9 +112,10 @@ public:
       lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      lengthKnobs[i].setRange(0.1, STEP_SEQ_MAX_LENGTH, 0.01);
-      lengthKnobs[i].setValue(DEFAULT_GATE);
-      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_GATE);
+      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
+      lengthKnobs[i].setSkewFactorFromMidPoint(4.0);
+      lengthKnobs[i].setValue(DEFAULT_LENGTH);
+      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_LENGTH);
 
       lengthKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);

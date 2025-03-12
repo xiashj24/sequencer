@@ -45,8 +45,13 @@ void Track::renderStep(int index) {
     int note_on_tick = getStepNoteOnTick(index);
     int note_off_tick = getStepNoteOffTick(index);
 
-    // force note off before the next active step
-    // TODO: is this necessary?
+    // force note off before the next active step if legato mode is off
+    if (!legato_)
+    {
+      // TODO:
+      while (getStepAtIndex((++index) % trackLength_).enabled == false);
+      auto next_active_step = getStepAtIndex(index); // do not re use index
+    }
 
     // note on message should always go to the first run
 #if JUCE_DEBUG
