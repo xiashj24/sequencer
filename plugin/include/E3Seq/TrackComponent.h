@@ -112,8 +112,8 @@ public:
       lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
       lengthKnobs[i].setSkewFactorFromMidPoint(4.0);
+      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
       lengthKnobs[i].setValue(DEFAULT_LENGTH);
       lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_LENGTH);
 

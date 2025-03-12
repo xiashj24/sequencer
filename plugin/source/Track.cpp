@@ -46,11 +46,20 @@ void Track::renderStep(int index) {
     int note_off_tick = getStepNoteOffTick(index);
 
     // force note off before the next active step if legato mode is off
-    if (!legato_)
-    {
-      // TODO:
-      while (getStepAtIndex((++index) % trackLength_).enabled == false);
-      auto next_active_step = getStepAtIndex(index); // do not re use index
+    if (!legato_) {
+      int next_active_step_index = (index + 1) % trackLength_;
+      while (!getStepAtIndex(next_active_step_index).enabled) {
+        next_active_step_index = (next_active_step_index + 1) % trackLength_;
+      }
+
+      if (next_active_step_index > index) {
+        note_off_tick =
+            std::min(note_off_tick, getStepNoteOnTick(next_active_step_index));
+      } else if (next_active_step_index < index) {
+        note_off_tick =
+            std::min(note_off_tick, getStepNoteOnTick(next_active_step_index) +
+                                        TICKS_PER_STEP * trackLength_); // is this ok?
+      }
     }
 
     // note on message should always go to the first run

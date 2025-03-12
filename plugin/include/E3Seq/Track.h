@@ -78,6 +78,7 @@ private:
   int channel_;
 
   // track parameters as seen by the user
+  
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
   bool legato_;
