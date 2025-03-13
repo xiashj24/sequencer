@@ -51,24 +51,47 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
-    startButton.setButtonText(juce::String::fromUTF8("▶Start"));
-    startButton.onClick = [this] {
-      processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
-                                   0.001);
+    playButton.setButtonText(juce::String::fromUTF8("⏯Play"));
+    playButton.setClickingTogglesState(true);
+    playButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
+                         juce::Colours::orangered);
+    playButton.addShortcut(juce::KeyPress(juce::KeyPress::spaceKey));
+    playButton.setTooltip("toggle play and pause (space)");
+    playButton.onClick = [this] {
+      if (processorRef.sequencer.neverStarted()) {
+        processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
+                                     0.001);
+      } else if (processorRef.sequencer.isRunning()) {
+        processorRef.sequencer.stop();
+      } else {
+        processorRef.sequencer.resume();
+      }
     };
-    addAndMakeVisible(startButton);
+    addAndMakeVisible(playButton);
 
     stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
-    stopButton.onClick = [this] { processorRef.sequencer.stop(); };
+    stopButton.addShortcut(juce::KeyPress(115));  // "s"
+    stopButton.setTooltip("stop playback and move to start position (s)");
+    stopButton.onClick = [this] {
+      processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
+                                   0.001);
+      processorRef.sequencer.stop();
+    };
     addAndMakeVisible(stopButton);
 
-    continueButton.setButtonText(juce::String::fromUTF8("⏭Cont"));
-    continueButton.onClick = [this] { processorRef.sequencer.resume(); };
-    addAndMakeVisible(continueButton);
+    recordButton.setButtonText(juce::String::fromUTF8("⏺Rec"));
+    recordButton.setClickingTogglesState(true);
+    recordButton.addShortcut(juce::KeyPress(114));  // "r"
+    recordButton.setTooltip("toggle real-time recording (r)");
+    recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
+                           juce::Colours::orangered);
+    recordButton.onClick = [this] {
+      processorRef.sequencer.setArmed(recordButton.getToggleState());
+    };
+    addAndMakeVisible(recordButton);
   }
 
   addAndMakeVisible(sequencerViewport);
-  // addAndMakeVisible(sequencerEditor);
   sequencerViewport.setViewedComponent(&sequencerEditor, false);
 
   addAndMakeVisible(onScreenKeyboard);
@@ -114,12 +137,13 @@ void AudioPluginAudioProcessorEditor::resized() {
   auto utility_bar =
       bounds.removeFromBottom(STEP_BUTTON_HEIGHT + 20).reduced(10);
 
-  startButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  recordButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(10);
+  playButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
   stopButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
-  continueButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
-  utility_bar.removeFromLeft(50);
+  utility_bar.removeFromLeft(40);
   bpmSlider.setBounds(utility_bar.removeFromLeft(240));
   utility_bar.removeFromLeft(10);
 

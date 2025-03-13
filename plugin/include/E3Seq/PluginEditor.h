@@ -16,19 +16,8 @@ public:
   void resized() override;
 
   bool keyPressed(const juce::KeyPress& key) override {
-    if (key == juce::KeyPress::spaceKey) {
-      auto& seq = processorRef.sequencer;
-      if (seq.isRunning()) {
-        seq.stop();
-      } else {
-        if (seq.neverStarted()) {
-          seq.start(juce::Time::getMillisecondCounterHiRes());
-        } else {
-          seq.resume();
-        }
-      }
-      return true;  // Key handled
-    }
+    // todo: add more keyboard shortcuts
+    juce::ignoreUnused(key);
     return false;  // Pass key event to parent
   }
 
@@ -42,9 +31,9 @@ private:
   SequencerComponent sequencerEditor;
   // TrackComponent tracks[8];
 
-  juce::TextButton startButton;
+  juce::TextButton recordButton;
+  juce::TextButton playButton;
   juce::TextButton stopButton;
-  juce::TextButton continueButton;
 
   juce::TextButton panicButton;
 

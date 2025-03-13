@@ -14,7 +14,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
               .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      sequencer(seqMidiCollector) {
+      sequencer(seqMidiCollector),
+      lastCallbackTime(0.0) {
 // create virtual MIDI out (Mac only)
 #if JUCE_MAC
   virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
@@ -169,15 +170,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     // ..do something to the audio data...
   }
   // MARK: process MIDI
-  // live recording: read MIDI input from MIDI buffer and program sequencer
 
   // process MIDI start/stop/continue messages
   // TODO: move this inside a separate MIDIMessageHandler
   for (const auto metadata : midiMessages) {
     auto message = metadata.getMessage();
 
+    // auto current_time = juce::Time::getMillisecondCounter() * 0.001;
+    auto time_stamp_in_seconds =
+        message.getTimeStamp() / getSampleRate() + lastCallbackTime;
+
+    // i donno why but using the more inaccurate getMillisecondCounter() seems
+    // to produce more precise timing
+
     if (message.isMidiStart()) {
-      sequencer.start(juce::Time::getMillisecondCounterHiRes() * 0.001);
+      sequencer.start(time_stamp_in_seconds);
     } else if (message.isMidiStop()) {
       sequencer.stop();
     } else if (message.isMidiContinue()) {
@@ -185,7 +192,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                            // of time keeping mechanism
     }
     // TODO: midi clock to bpm
+    else if (message.isNoteOn()) {
+      message.setTimeStamp(time_stamp_in_seconds);
+      sequencer.handleNoteOn(message);
+    } else if (message.isNoteOff()) {
+      message.setTimeStamp(time_stamp_in_seconds);
+      sequencer.handleNoteOff(message);
+    }
   }
+
+  lastCallbackTime = juce::Time::getMillisecondCounterHiRes() * 0.001;
 
   // generate MIDI start/stop/continue messages by querying DAW transport
   // also set bpm
@@ -206,7 +222,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     }
   }
 
-  midiMessages.clear();  // discard input MIDI messages
+  // midiMessages.clear();  // discard input MIDI messages
 
   // overwrite MIDI buffer
   seqMidiCollector.removeNextBlockOfMessages(midiMessages, getBlockSize());

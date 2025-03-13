@@ -82,10 +82,15 @@ public:
   }
 
   bool isRunning() const { return running_; }
+  bool isArmed() const { return armed_; }
+
+  void setArmed(bool armed) { armed_ = armed; }
+  void handleNoteOn(juce::MidiMessage noteOn);
+  void handleNoteOff(juce::MidiMessage noteOff);
 
   // sequencer programming interface
   Track& getTrack(int index) { return tracks_[index]; }
-  // second-based timekeeping, call this frequenctly, preferably over 1kHz
+  // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
   void process(double deltaTime);
 
   // tick-based timekeeping for MIDI clock sync
@@ -98,10 +103,15 @@ private:
   // TODO: alternative time signatures
   double getOneTickTime() const { return 15.0 / bpm_ / TICKS_PER_STEP; }
 
+  double getOneStepTime() const { return TICKS_PER_STEP * getOneTickTime(); }
+
   // function-related variables
   bool running_;
+  bool armed_;
   double timeSinceStart_;
   double startTime_;
+
+  std::optional<juce::MidiMessage> lastNoteOnEachKey_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };

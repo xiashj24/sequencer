@@ -58,7 +58,7 @@ public:
   bool isEnabled() const { return enabled_; }
   int getLength() const { return trackLength_; }
 
-  // caller should register a callback to receive Midi messages
+  // caller should register a callback to receive MIDI messages
   std::function<void(juce::MidiMessage msg)> sendMidiMessage;
 
   // this function should be called {TICKS_PER_STEP} times per step
@@ -78,11 +78,11 @@ private:
   int channel_;
 
   // track parameters as seen by the user
-  
+
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
   bool legato_;
-  [[maybe_unused]] float swing_;                   // TODO: implement swing
+  [[maybe_unused]] float swing_;                   // TODO: implement swing (should not affect roll)
   [[maybe_unused]] bool resync_to_longest_track_;  // or master length
 
   // function-related variables

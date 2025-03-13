@@ -11,6 +11,7 @@ namespace Sequencer {
 E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
     : bpm_(bpm),
       running_(false),
+      armed_(false),
       timeSinceStart_(0.0),
       startTime_(0.0),
       midiCollector_(midiCollector) {
@@ -60,4 +61,39 @@ void E3Sequencer::start(double startTime) {
   }
 }
 
+void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
+  if (this->isArmed() && this->isRunning()) {
+    int channel = noteOn.getChannel();
+    int step_index = getTrack(channel - 1).getCurrentStepIndex();
+    lastNoteOnEachKey_[step_index].emplace(noteOn);
+  }
+}
+
+void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
+  // find corresponding note on
+  int note = noteOff.getNoteNumber();
+  int channel = noteOff.getChannel();
+  for (int index = 0; index < STEP_SEQ_MAX_LENGTH; ++index) {
+    if (lastNoteOnEachKey_[index].has_value()) {
+      auto noteOn = lastNoteOnEachKey_[index].value();
+      if (noteOn.getNoteNumber() == note && noteOn.getChannel() == channel) {
+        // calculate offset and length
+        auto offset = (noteOn.getTimeStamp() - startTime_) / getOneStepTime();
+        offset -= std::round(offset);  // wrap in [-0.5, 0.5)
+
+        auto length =
+            (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();
+        length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
+
+        getTrack(channel - 1)
+            .setStepAtIndex(index, {.enabled = true,
+                                    .note = note,
+                                    .velocity = noteOn.getVelocity(),
+                                    .offset = static_cast<float>(offset),
+                                    .length = static_cast<float>(length)});
+        lastNoteOnEachKey_[index].reset();
+      }
+    }
+  }
+}
 }  // namespace Sequencer
