@@ -22,20 +22,19 @@ struct Note {
 };
 
 struct Step {
+  bool enabled = false;
+
   int note = DEFAULT_NOTE;
-  float length = DEFAULT_LENGTH;  // note: can be greater than 1 but
-                                  // should be smaller than track length
-  bool tie = false;               // or use something like length > MAX_GATE ?
   int velocity = DEFAULT_VELOCITY;
   float offset = 0.0;
+  float length = DEFAULT_LENGTH;  // note: can be greater than 1 but
+                                  // should be smaller than track length
 
-  float retrigger_interval = 0.0;  // in fractional steps (internally quantized
+  float retrigger_rate = 0.0;  // in fractional steps (internally quantized
                                    // to ticks), 0.0 means no retrigger
   float probability = 1.0;
   int alternate = 1;
   int count = 0;
-
-  bool enabled = false;
 };
 
 }  // namespace Sequencer

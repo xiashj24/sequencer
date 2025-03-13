@@ -74,9 +74,9 @@ void Track::renderStep(int index) {
     renderMidiMessage(note_on_message);
 
     // retrigger
-    if (step.retrigger_interval > 0.0) {
+    if (step.retrigger_rate > 0.0) {
       int retrigger_interval_in_ticks =
-          static_cast<int>(step.retrigger_interval * TICKS_PER_STEP);
+          static_cast<int>(step.retrigger_rate * TICKS_PER_STEP);
       for (int tick = note_on_tick + retrigger_interval_in_ticks;
            tick < note_off_tick; tick += retrigger_interval_in_ticks) {
         juce::MidiMessage retrigger_note_off_message =

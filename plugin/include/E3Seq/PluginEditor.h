@@ -54,7 +54,9 @@ private:
             juce::String{BUILD_DATE.data()} +
             "\n\n"
             "Tips:\n"
-            "Space key: toggle stop/continue\n"
+            "Space key: toggle play/pause\n"
+            "R: toggle real-time recording\n"
+            "S: stop playback and return to start postion\n"
             "Double click or alt+click on any parameter to reset to default\n"
             "\n");
   }

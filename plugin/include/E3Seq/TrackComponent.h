@@ -191,7 +191,7 @@ public:
       retriggerKnobs[i].onValueChange = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
         int index = static_cast<int>(retriggerKnobs[i].getValue());
-        step.retrigger_interval = RetriggerValue[index];
+        step.retrigger_rate = RetriggerValue[index];
         trackRef.setStepAtIndex(i, step);
       };
 
