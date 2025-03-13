@@ -35,10 +35,13 @@ private:
   juce::TextButton playButton;
   juce::TextButton stopButton;
 
+
   juce::TextButton panicButton;
 
   juce::Label bpmLabel;
   juce::Slider bpmSlider;
+
+  juce::TextButton quantizeButton;
 
   juce::Label keyboardMidiChannelLabel;
   juce::Slider keyboardMidiChannelSlider;

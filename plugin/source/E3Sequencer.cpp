@@ -12,6 +12,7 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
     : bpm_(bpm),
       running_(false),
       armed_(false),
+      quantizeRec_(false),
       timeSinceStart_(0.0),
       startTime_(0.0),
       midiCollector_(midiCollector) {
@@ -34,9 +35,7 @@ void E3Sequencer::process(double deltaTime) {
   if (!running_)
     return;
 
-  // time update
-  // note: deltaTime should be much smaller than oneTickTime or precision will
-  // be bad
+  // note: deltaTime should be much smaller than oneTickTime
   timeSinceStart_ += deltaTime;
   double one_tick_time = getOneTickTime();
 
@@ -45,7 +44,6 @@ void E3Sequencer::process(double deltaTime) {
       track.tick();  // tick and collect midi events from each track
     }
 
-    // TODO: also send MIDI clock, or just pass through incoming MIDI clock?
     timeSinceStart_ -= one_tick_time;
   }
 
@@ -77,9 +75,13 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
     if (lastNoteOnEachKey_[index].has_value()) {
       auto noteOn = lastNoteOnEachKey_[index].value();
       if (noteOn.getNoteNumber() == note && noteOn.getChannel() == channel) {
-        // calculate offset and length
-        auto offset = (noteOn.getTimeStamp() - startTime_) / getOneStepTime();
-        offset -= std::round(offset);  // wrap in [-0.5, 0.5)
+        // calculate offset and lengt
+
+        double offset = 0.0;
+        if (!quantizeRec_) {
+          offset = (noteOn.getTimeStamp() - startTime_) / getOneStepTime();
+          offset -= std::round(offset);  // wrap in [-0.5, 0.5)
+        }
 
         auto length =
             (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();

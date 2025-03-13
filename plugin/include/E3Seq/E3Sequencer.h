@@ -85,6 +85,7 @@ public:
   bool isArmed() const { return armed_; }
 
   void setArmed(bool armed) { armed_ = armed; }
+  void setQuantizeRec(bool shouldQuantize) { quantizeRec_ = shouldQuantize; }
   void handleNoteOn(juce::MidiMessage noteOn);
   void handleNoteOff(juce::MidiMessage noteOff);
 
@@ -108,6 +109,8 @@ private:
   // function-related variables
   bool running_;
   bool armed_;
+  bool quantizeRec_;
+
   double timeSinceStart_;
   double startTime_;
 

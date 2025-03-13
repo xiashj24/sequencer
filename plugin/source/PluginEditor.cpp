@@ -76,6 +76,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
       processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
                                    0.001);
       processorRef.sequencer.stop();
+      playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
     };
     addAndMakeVisible(stopButton);
 
@@ -90,6 +91,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     };
     addAndMakeVisible(recordButton);
   }
+
+  quantizeButton.setButtonText("Quantize");
+  quantizeButton.setClickingTogglesState(true);
+  quantizeButton.setTooltip("quantize note-on timing for real-time recording (q)");
+  quantizeButton.addShortcut(juce::KeyPress(113));
+  quantizeButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
+                           juce::Colours::orangered);
+  quantizeButton.onClick = [this] {
+    processorRef.sequencer.setQuantizeRec(quantizeButton.getToggleState());
+  };
+  addAndMakeVisible(quantizeButton);
 
   addAndMakeVisible(sequencerViewport);
   sequencerViewport.setViewedComponent(&sequencerEditor, false);
@@ -142,6 +154,8 @@ void AudioPluginAudioProcessorEditor::resized() {
   playButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
   stopButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(10);
+  quantizeButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
   utility_bar.removeFromLeft(40);
   bpmSlider.setBounds(utility_bar.removeFromLeft(240));
