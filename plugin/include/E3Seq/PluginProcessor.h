@@ -54,6 +54,8 @@ private:
   juce::MidiMessageCollector seqMidiCollector;
 
   std::unique_ptr<juce::MidiOutput> virtualMidiOut;
+
+  juce::AudioProcessorValueTreeState state; // TODO!    
   
   double lastCallbackTime;
 

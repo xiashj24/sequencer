@@ -60,6 +60,10 @@ void E3Sequencer::start(double startTime) {
 }
 
 void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
+  // ignore MIDI messages for channels > 8, will remove later
+  if (noteOn.getChannel() > 8)
+    return;
+
   if (this->isArmed() && this->isRunning()) {
     int channel = noteOn.getChannel();
     int step_index = getTrack(channel - 1).getCurrentStepIndex();
@@ -75,7 +79,7 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
     if (lastNoteOnEachKey_[index].has_value()) {
       auto noteOn = lastNoteOnEachKey_[index].value();
       if (noteOn.getNoteNumber() == note && noteOn.getChannel() == channel) {
-        // calculate offset and lengt
+        // calculate offset and length
 
         double offset = 0.0;
         if (!quantizeRec_) {

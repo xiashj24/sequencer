@@ -15,12 +15,6 @@ public:
   void paint(juce::Graphics&) override;
   void resized() override;
 
-  bool keyPressed(const juce::KeyPress& key) override {
-    // todo: add more keyboard shortcuts
-    juce::ignoreUnused(key);
-    return false;  // Pass key event to parent
-  }
-
 private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
@@ -34,7 +28,6 @@ private:
   juce::TextButton recordButton;
   juce::TextButton playButton;
   juce::TextButton stopButton;
-
 
   juce::TextButton panicButton;
 

@@ -82,7 +82,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
     recordButton.setButtonText(juce::String::fromUTF8("⏺Rec"));
     recordButton.setClickingTogglesState(true);
-    recordButton.addShortcut(juce::KeyPress(114));  // "r"
+    recordButton.addShortcut(juce::KeyPress(114));
     recordButton.setTooltip("toggle real-time recording (r)");
     recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                            juce::Colours::orangered);
