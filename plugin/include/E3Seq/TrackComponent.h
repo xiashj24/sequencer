@@ -41,7 +41,9 @@ public:
   TrackComponent(AudioPluginAudioProcessor& p,
                  int trackNumber,
                  juce::Colour trackColor)
-      : trackRef(p.sequencer.getTrack(trackNumber)), trackNumber_(trackNumber) {
+      : processorRef(p),
+        trackRef(p.sequencer.getTrack(trackNumber)),
+        trackNumber_(trackNumber) {
     // look and feel
     // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
 
@@ -63,6 +65,7 @@ public:
       stepButtons[i].setColour(juce::TextButton::ColourIds::buttonOnColourId,
                                trackColor);
 
+      // TODO: live recording will make the knobs visible
       stepButtons[i].onClick = [this, i] {
         auto step = trackRef.getStepAtIndex(i);
         step.enabled = stepButtons[i].getToggleState();
@@ -87,43 +90,7 @@ public:
       noteKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
       noteKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      noteKnobs[i].textFromValueFunction = [](double value) {
-        return juce::MidiMessage::getMidiNoteName(static_cast<int>(value), true,
-                                                  true, 4);
-      };
-      noteKnobs[i].setRange(21, 127, 1);
-      noteKnobs[i].setDoubleClickReturnValue(true, DEFAULT_NOTE);
-      noteKnobs[i].setValue(DEFAULT_NOTE);
-
-      // TODO: text show note name instead of number
-
-      noteKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.note = static_cast<int>(noteKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
       addChildComponent(noteKnobs[i]);
-    }
-
-    // length
-    lengthLabel.setText("length", juce::NotificationType::dontSendNotification);
-    addAndMakeVisible(lengthLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
-      lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
-      lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
-                                     STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      lengthKnobs[i].setSkewFactorFromMidPoint(4.0);
-      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
-      lengthKnobs[i].setValue(DEFAULT_LENGTH);
-      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_LENGTH);
-
-      lengthKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.length = static_cast<float>(lengthKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
-
-      addChildComponent(lengthKnobs[i]);
     }
 
     // velocity
@@ -134,16 +101,6 @@ public:
       velocityKnobs[i].setSliderStyle(juce::Slider::LinearVertical);
       velocityKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                        STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      velocityKnobs[i].setRange(1, 127, 1);
-      velocityKnobs[i].setValue(DEFAULT_VELOCITY);
-      velocityKnobs[i].setDoubleClickReturnValue(true, DEFAULT_VELOCITY);
-
-      velocityKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.velocity = static_cast<int>(velocityKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
-
       addChildComponent(velocityKnobs[i]);
     }
 
@@ -169,6 +126,27 @@ public:
         trackRef.setStepAtIndex(i, step);
       };
       addChildComponent(offsetKnobs[i]);
+    }
+
+    // length
+    lengthLabel.setText("length", juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(lengthLabel);
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+      lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
+      lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
+                                     STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
+      lengthKnobs[i].setSkewFactorFromMidPoint(4.0);
+      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
+      lengthKnobs[i].setValue(DEFAULT_LENGTH);
+      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_LENGTH);
+
+      lengthKnobs[i].onValueChange = [this, i] {
+        auto step = trackRef.getStepAtIndex(i);
+        step.length = static_cast<float>(lengthKnobs[i].getValue());
+        trackRef.setStepAtIndex(i, step);
+      };
+
+      addChildComponent(lengthKnobs[i]);
     }
 
     // retrigger
@@ -206,15 +184,6 @@ public:
       probabilityKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
       probabilityKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                           STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      probabilityKnobs[i].setRange(0, 1, 0.01);
-      probabilityKnobs[i].setValue(1);
-      probabilityKnobs[i].setDoubleClickReturnValue(true, 1);
-
-      probabilityKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.probability = static_cast<float>(probabilityKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
       addChildComponent(probabilityKnobs[i]);
     }
 
@@ -226,21 +195,42 @@ public:
       alternateKnobs[i].setSliderStyle(juce::Slider::LinearVertical);
       alternateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      alternateKnobs[i].setRange(1, 4, 1);
-      alternateKnobs[i].setValue(1);
-      alternateKnobs[i].setDoubleClickReturnValue(true, 1);
 
-      alternateKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.alternate = static_cast<int>(alternateKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
       addChildComponent(alternateKnobs[i]);
+    }
+
+    // attach buttons and sliders to processor parameters
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+      juce::String prefix =
+          "T" + juce::String(trackNumber_) + "_S" + juce::String(i) + "_";
+
+      enableAttachments[i] = std::make_unique<ButtonAttachment>(
+          processorRef.parameters, prefix + "ENABLED", stepButtons[i]);
+
+      noteAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "NOTE", noteKnobs[i]);
+
+      velocityAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "VELOCITY", velocityKnobs[i]);
+
+      offsetAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "OFFSET", offsetKnobs[i]);
+
+      lengthAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "LENGTH", lengthKnobs[i]);
+
+      retriggerAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "RETRIGGER", retriggerKnobs[i]);
+
+      probabilityAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "PROBABILITY", probabilityKnobs[i]);
+
+      alternateAttachments[i] = std::make_unique<SliderAttachment>(
+          processorRef.parameters, prefix + "ALTERNATE", alternateKnobs[i]);
     }
   }
 
-  // put all dynamic GUI processing here?
-  // maybe try some async animation stuff?
+  // TODO: try some async animation stuff?
   void timerCallback() override final {
     int playhead_index = trackRef.getCurrentStepIndex();
 
@@ -257,11 +247,11 @@ public:
     // layout
     trackCollapseButton.setBounds(0, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
     noteLabel.setBounds(0, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    lengthLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
-                          STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    velocityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
+    velocityLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 1,
                             STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-    offsetLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
+    offsetLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
+                          STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+    lengthLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                           STEP_BUTTON_WIDTH, KNOB_HEIGHT);
     retriggerLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
                              STEP_BUTTON_WIDTH, KNOB_HEIGHT);
@@ -275,11 +265,11 @@ public:
       stepButtons[i].setBounds(x, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
       noteKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH,
                              KNOB_HEIGHT);
-      lengthKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
-                               STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-      velocityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
+      velocityKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT,
                                  STEP_BUTTON_WIDTH, KNOB_HEIGHT);
-      offsetKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
+      offsetKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 2,
+                               STEP_BUTTON_WIDTH, KNOB_HEIGHT);
+      lengthKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 3,
                                STEP_BUTTON_WIDTH, KNOB_HEIGHT);
       retriggerKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 4,
                                   STEP_BUTTON_WIDTH, KNOB_HEIGHT);
@@ -296,6 +286,7 @@ public:
   }
 
 private:
+  AudioPluginAudioProcessor& processorRef;
   Sequencer::Track& trackRef;
   int trackNumber_;
   bool collapsed_;
@@ -334,6 +325,19 @@ private:
   juce::Slider retriggerKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider probabilityKnobs[STEP_SEQ_DEFAULT_LENGTH];
   juce::Slider alternateKnobs[STEP_SEQ_DEFAULT_LENGTH];
+
+  using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+  using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+
+  // Parameter attachments
+  std::unique_ptr<ButtonAttachment> enableAttachments[STEP_SEQ_DEFAULT_LENGTH];
+  std::unique_ptr<SliderAttachment> noteAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      velocityAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      offsetAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      lengthAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      retriggerAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      probabilityAttachments[STEP_SEQ_DEFAULT_LENGTH],
+      alternateAttachments[STEP_SEQ_DEFAULT_LENGTH];
 };
 
 }  // namespace audio_plugin
