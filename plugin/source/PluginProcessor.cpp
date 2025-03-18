@@ -57,13 +57,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     juce::String prefix =
         "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
     parameters.getParameter(prefix + "ENABLED")
-        ->setValueNotifyingHost(step.enabled);
+        ->setValueNotifyingHost(static_cast<float>(step.enabled));
 
     auto p = parameters.getParameter(prefix + "NOTE");
-    p->setValueNotifyingHost(p->convertTo0to1(step.note));
+    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.note)));
 
     p = parameters.getParameter(prefix + "VELOCITY");
-    p->setValueNotifyingHost(p->convertTo0to1(step.velocity));
+    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.velocity)));
 
     p = parameters.getParameter(prefix + "OFFSET");
     p->setValueNotifyingHost(p->convertTo0to1(step.offset));
@@ -78,7 +78,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     p->setValueNotifyingHost(p->convertTo0to1(step.probability));
 
     p = parameters.getParameter(prefix + "ALTERNATE");
-    p->setValueNotifyingHost(p->convertTo0to1(step.alternate));
+    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.alternate)));
   };
   startTimer(TIMER_INTERVAL_MS);
 }
