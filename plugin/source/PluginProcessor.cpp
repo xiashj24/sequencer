@@ -63,7 +63,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.note)));
 
     p = parameters.getParameter(prefix + "VELOCITY");
-    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.velocity)));
+    p->setValueNotifyingHost(
+        p->convertTo0to1(static_cast<float>(step.velocity)));
 
     p = parameters.getParameter(prefix + "OFFSET");
     p->setValueNotifyingHost(p->convertTo0to1(step.offset));
@@ -78,7 +79,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     p->setValueNotifyingHost(p->convertTo0to1(step.probability));
 
     p = parameters.getParameter(prefix + "ALTERNATE");
-    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.alternate)));
+    p->setValueNotifyingHost(
+        p->convertTo0to1(static_cast<float>(step.alternate)));
   };
   startTimer(TIMER_INTERVAL_MS);
 }
@@ -103,48 +105,53 @@ AudioPluginAudioProcessor::createParameterLayout() {
       layout.add(std::make_unique<AudioParameterBool>(prefix + "ENABLED",
                                                       "Enabled", false));
 
+      auto note_attributes =
+          juce::AudioParameterIntAttributes{}.withStringFromValueFunction(
+              [](int value, int maximumStringLength) {
+                juce::ignoreUnused(maximumStringLength);
+                return juce::MidiMessage::getMidiNoteName(value, true, true, 4);
+              });
       layout.add(std::make_unique<AudioParameterInt>(
-          prefix + "NOTE", "Note", 21, 127, DEFAULT_NOTE, "Note",
-          [](int value, int maximumStringLength) {
-            juce::ignoreUnused(maximumStringLength);
-            return juce::MidiMessage::getMidiNoteName(value, true, true, 4);
-          }));
+          prefix + "NOTE", "Note", 21, 127, DEFAULT_NOTE, note_attributes));
 
       layout.add(std::make_unique<AudioParameterInt>(
-          prefix + "VELOCITY", "Velocity", 1, 127, DEFAULT_VELOCITY,
-          "Velocity"));
+          prefix + "VELOCITY", "Velocity", 1, 127, DEFAULT_VELOCITY));
 
+      auto offset_attributes =
+          juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
+              [](float value, int maximumStringLength) {
+                juce::ignoreUnused(maximumStringLength);
+                int index = static_cast<int>(value * 24) + 12;
+                return OffsetText[index];
+              });
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "OFFSET", "Offset",
-          NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f, "Offset",
-          juce::AudioProcessorParameter::genericParameter,
-          [](float value, int maximumStringLength) {
-            juce::ignoreUnused(maximumStringLength);
-            int index = static_cast<int>(value * 24) + 12;
-            return OffsetText[index];
-          }));
+          NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f,
+          offset_attributes));
 
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "LENGTH", "Length",
           NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
-          static_cast<float>(DEFAULT_LENGTH), "Length"));
+          static_cast<float>(DEFAULT_LENGTH)));
 
+      auto retrigger_attributes =
+          juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
+              [](float value, int maximumStringLength) {
+                juce::ignoreUnused(maximumStringLength);
+                int index = static_cast<int>(value * 12);
+                return RetriggerText[index];
+              });
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "RETRIGGER", "Retrigger Rate",
-          NormalisableRange<float>(0.f, 1.5f, 1.f / 12.f), 0.f, "Retrigger",
-          juce::AudioProcessorParameter::genericParameter,
-          [](float value, int maximumStringLength) {
-            juce::ignoreUnused(maximumStringLength);
-            int index = static_cast<int>(value * 12);
-            return RetriggerText[index];
-          }));
+          NormalisableRange<float>(0.f, 1.5f, 1.f / 12.f), 0.f,
+          retrigger_attributes));
 
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "PROBABILITY", "Probability",
-          NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f, "Probability"));
+          NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f));
 
       layout.add(std::make_unique<AudioParameterInt>(
-          prefix + "ALTERNATE", "Alternate", 1, 4, 1, "Alternate"));
+          prefix + "ALTERNATE", "Alternate", 1, 4, 1));
     }
   }
   return layout;
