@@ -24,7 +24,6 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       int tick = (int)msg.getTimeStamp();
       double real_time_stamp = startTime_ + getOneTickTime() * tick;
       // this time translation code is smelling....need some further thinking
-      // TODO: is it possible to implement note stealing via a simple queue?
       this->midiCollector_.addMessageToQueue(
           msg.withTimeStamp(real_time_stamp));
     };
@@ -67,7 +66,7 @@ void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
   if (this->isArmed() && this->isRunning()) {
     int channel = noteOn.getChannel();
     int step_index = getTrack(channel - 1).getCurrentStepIndex();
-    lastNoteOnEachKey_[step_index].emplace(noteOn);
+    lastNoteOn_[step_index].emplace(noteOn);
   }
 }
 
@@ -76,8 +75,8 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
   int note = noteOff.getNoteNumber();
   int channel = noteOff.getChannel();
   for (int index = 0; index < STEP_SEQ_MAX_LENGTH; ++index) {
-    if (lastNoteOnEachKey_[index].has_value()) {
-      auto noteOn = lastNoteOnEachKey_[index].value();
+    if (lastNoteOn_[index].has_value()) {
+      auto noteOn = lastNoteOn_[index].value();
       if (noteOn.getNoteNumber() == note && noteOn.getChannel() == channel) {
         // calculate offset and length
 
@@ -91,13 +90,15 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
             (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();
         length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
 
-        getTrack(channel - 1)
-            .setStepAtIndex(index, {.enabled = true,
-                                    .note = note,
-                                    .velocity = noteOn.getVelocity(),
-                                    .offset = static_cast<float>(offset),
-                                    .length = static_cast<float>(length)});
-        lastNoteOnEachKey_[index].reset();
+        Step step{.enabled = true,
+                  .note = note,
+                  .velocity = noteOn.getVelocity(),
+                  .offset = static_cast<float>(offset),
+                  .length = static_cast<float>(length)};
+        getTrack(channel - 1).setStepAtIndex(index, step);
+        // notify AudioProcessor about parameter change
+        notifyProcessor(channel - 1, index, step);
+        lastNoteOn_[index].reset();
       }
     }
   }

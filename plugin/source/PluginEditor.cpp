@@ -9,8 +9,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
       sequencerEditor(p),
       onScreenKeyboard(p.keyboardState,
                        juce::MidiKeyboardComponent::horizontalKeyboard) {
-  juce::ignoreUnused(processorRef);
-
   bpmLabel.setText("BPM: ", juce::NotificationType::dontSendNotification);
   bpmLabel.attachToComponent(&bpmSlider, true);
   bpmSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
@@ -76,7 +74,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
       processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
                                    0.001);
       processorRef.sequencer.stop();
-      playButton.setToggleState(false, juce::NotificationType::dontSendNotification);
+      playButton.setToggleState(false,
+                                juce::NotificationType::dontSendNotification);
     };
     addAndMakeVisible(stopButton);
 
@@ -94,7 +93,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   quantizeButton.setButtonText("Quantize");
   quantizeButton.setClickingTogglesState(true);
-  quantizeButton.setTooltip("quantize note-on timing for real-time recording (q)");
+  quantizeButton.setTooltip(
+      "quantize note-on timing for real-time recording (q)");
   quantizeButton.addShortcut(juce::KeyPress(113));
   quantizeButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                            juce::Colours::orangered);
@@ -107,6 +107,29 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   sequencerViewport.setViewedComponent(&sequencerEditor, false);
 
   addAndMakeVisible(onScreenKeyboard);
+
+  // TODO: use command system for save and load
+
+  presetFolder =
+      juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+          .getChildFile("E3Seq");
+  if (!presetFolder.exists()) {
+    presetFolder.createDirectory();
+  }
+  presetLoader =
+      std::make_unique<juce::FileChooser>("Load Preset", presetFolder, "*.xml");
+  presetSaver =
+      std::make_unique<juce::FileChooser>("Save Preset", presetFolder, "*.xml");
+
+  savePresetButton.setButtonText("Save");
+  savePresetButton.setTooltip("save preset as a XML file (ctrl+s)");
+  savePresetButton.onClick = [this]() { savePreset(); };
+  addAndMakeVisible(savePresetButton);
+
+  loadPresetButton.setButtonText("Load");
+  loadPresetButton.setTooltip("load preset from a XML file (ctrl+l)");
+  loadPresetButton.onClick = [this]() { loadPreset(); };
+  addAndMakeVisible(loadPresetButton);
 
   // TODO: set up message box
   // addAndMakeVisible(midiMessagesBox);
@@ -133,11 +156,24 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor() {}
 
-void AudioPluginAudioProcessorEditor::paint(juce::Graphics& g) {
-  // (Our component is opaque, so we must completely fill the background with
-  // a solid colour)
-  g.fillAll(
-      getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+void AudioPluginAudioProcessorEditor::savePreset() {
+  presetSaver->launchAsync(juce::FileBrowserComponent::saveMode |
+                               juce::FileBrowserComponent::canSelectFiles,
+                           [this](const juce::FileChooser& chooser) {
+                             juce::File file = chooser.getResult();
+                             if (file != juce::File{}) {
+                               processorRef.savePreset(file);
+                             }
+                           });
+}
+
+void AudioPluginAudioProcessorEditor::loadPreset() {
+  presetLoader->launchAsync(juce::FileBrowserComponent::openMode |
+                                juce::FileBrowserComponent::canSelectFiles,
+                            [this](const juce::FileChooser& chooser) {
+                              processorRef.loadPreset(chooser.getResult());
+                            });
+  stopButton.triggerClick();
 }
 
 void AudioPluginAudioProcessorEditor::resized() {
@@ -164,6 +200,10 @@ void AudioPluginAudioProcessorEditor::resized() {
   helpButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_HEIGHT));
   utility_bar.removeFromRight(10);
   panicButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromRight(10);
+  loadPresetButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromRight(10);
+  savePresetButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_WIDTH));
   utility_bar.removeFromRight(10);
   keyboardMidiChannelSlider.setBounds(utility_bar.removeFromRight(80));
   utility_bar.removeFromRight(10);

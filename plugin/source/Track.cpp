@@ -18,6 +18,14 @@ int Track::getStepNoteOffTick(int index) const {
       (index + steps_[index].offset + steps_[index].length) * TICKS_PER_STEP);
 }
 
+void Track::setStepAtIndex(int index, Step step, bool ignore_alternate_count) {
+  if (ignore_alternate_count) {
+    step.count = steps_[index].count;
+  }
+
+  steps_[index] = step;
+}
+
 // insert a future MIDI message into the MIDI buffer based on its timestamp
 void Track::renderMidiMessage(juce::MidiMessage message) {
   int tick = static_cast<int>(message.getTimeStamp());
@@ -56,16 +64,11 @@ void Track::renderStep(int index) {
         note_off_tick =
             std::min(note_off_tick, getStepNoteOnTick(next_active_step_index));
       } else if (next_active_step_index < index) {
-        note_off_tick =
-            std::min(note_off_tick, getStepNoteOnTick(next_active_step_index) +
-                                        TICKS_PER_STEP * trackLength_); // is this ok?
+        note_off_tick = std::min(
+            note_off_tick, getStepNoteOnTick(next_active_step_index) +
+                               TICKS_PER_STEP * trackLength_);  // is this ok?
       }
     }
-
-    // note on message should always go to the first run
-#if JUCE_DEBUG
-    jassert(note_on_tick < trackLength_ * TICKS_PER_STEP - half_step_ticks);
-#endif
 
     // note on
     juce::MidiMessage note_on_message = juce::MidiMessage::noteOn(

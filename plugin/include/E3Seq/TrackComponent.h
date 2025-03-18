@@ -10,32 +10,6 @@ namespace audio_plugin {
 #define KNOB_HEIGHT 90
 #define KNOB_TEXT_HEIGHT 20
 
-// (since C++17) shared const across different translation units
-inline juce::String OffsetText[TICKS_PER_STEP] = {
-    "-1/2", "-11/24", "-5/12", "-3/8",  "-1/3", "-7/24", "-1/4", "-5/24",
-    "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
-    "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
-
-inline juce::String RetriggerText[15] = {"Off", "0.17", "0.25", "0.33", "0.42",
-                                         "0.5", "0.58", "0.67", "0.75", "0.83",
-                                         "1",   "1.17", "1.25", "1.33", "1.5"};
-
-inline float RetriggerValue[15] = {0.f,  // retrigger off
-                                   4.f / TICKS_PER_STEP,
-                                   6.f / TICKS_PER_STEP,
-                                   8.f / TICKS_PER_STEP,
-                                   10.f / TICKS_PER_STEP,
-                                   12.f / TICKS_PER_STEP,
-                                   14.f / TICKS_PER_STEP,
-                                   16.f / TICKS_PER_STEP,
-                                   18.f / TICKS_PER_STEP,
-                                   20.f / TICKS_PER_STEP,
-                                   24.f / TICKS_PER_STEP,
-                                   28.f / TICKS_PER_STEP,
-                                   30.f / TICKS_PER_STEP,
-                                   32.f / TICKS_PER_STEP,
-                                   36.f / TICKS_PER_STEP};
-
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
   TrackComponent(AudioPluginAudioProcessor& p,
@@ -44,8 +18,6 @@ public:
       : processorRef(p),
         trackRef(p.sequencer.getTrack(trackNumber)),
         trackNumber_(trackNumber) {
-    // look and feel
-    // TODO: add page switching if STEP_SEQ_DEFAULT_LENGTH exceed 16
 
     startTimer(10);
 
@@ -65,20 +37,17 @@ public:
       stepButtons[i].setColour(juce::TextButton::ColourIds::buttonOnColourId,
                                trackColor);
 
-      // TODO: live recording will make the knobs visible
-      stepButtons[i].onClick = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.enabled = stepButtons[i].getToggleState();
-        // stepButtons[i].setAlpha(step.enabled ? 1.f : DISABLED_ALPHA);
-        noteKnobs[i].setVisible(step.enabled);
-        lengthKnobs[i].setVisible(step.enabled);
-        velocityKnobs[i].setVisible(step.enabled);
-        offsetKnobs[i].setVisible(step.enabled);
-        probabilityKnobs[i].setVisible(step.enabled);
-        retriggerKnobs[i].setVisible(step.enabled);
-        alternateKnobs[i].setVisible(step.enabled);
-        trackRef.setStepAtIndex(i, step);
+      stepButtons[i].onStateChange = [this, i] {
+        bool visible = stepButtons[i].getToggleState();
+        noteKnobs[i].setVisible(visible);
+        velocityKnobs[i].setVisible(visible);
+        offsetKnobs[i].setVisible(visible);
+        lengthKnobs[i].setVisible(visible);
+        probabilityKnobs[i].setVisible(visible);
+        retriggerKnobs[i].setVisible(visible);
+        alternateKnobs[i].setVisible(visible);
       };
+
       addAndMakeVisible(stepButtons[i]);
     }
 
@@ -111,20 +80,6 @@ public:
       offsetKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       offsetKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-      offsetKnobs[i].textFromValueFunction = [](double value) {
-        int index = static_cast<int>(value * TICKS_PER_STEP) + 12;
-        return OffsetText[index];
-      };
-
-      offsetKnobs[i].setRange(-0.5, 0.49, 0.01);
-      offsetKnobs[i].setValue(0.0);
-      offsetKnobs[i].setDoubleClickReturnValue(true, 0.0);
-
-      offsetKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.offset = static_cast<float>(offsetKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
       addChildComponent(offsetKnobs[i]);
     }
 
@@ -136,15 +91,6 @@ public:
       lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
       lengthKnobs[i].setSkewFactorFromMidPoint(4.0);
-      lengthKnobs[i].setRange(0.083, STEP_SEQ_MAX_LENGTH, 0.01);
-      lengthKnobs[i].setValue(DEFAULT_LENGTH);
-      lengthKnobs[i].setDoubleClickReturnValue(true, DEFAULT_LENGTH);
-
-      lengthKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        step.length = static_cast<float>(lengthKnobs[i].getValue());
-        trackRef.setStepAtIndex(i, step);
-      };
 
       addChildComponent(lengthKnobs[i]);
     }
@@ -157,22 +103,6 @@ public:
       retriggerKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       retriggerKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
-
-      retriggerKnobs[i].textFromValueFunction = [](double value) {
-        int index = static_cast<int>(value);
-        return RetriggerText[index];
-      };
-      retriggerKnobs[i].setRange(0, 14, 1);
-      retriggerKnobs[i].setValue(0);
-      retriggerKnobs[i].setDoubleClickReturnValue(true, 1);
-
-      retriggerKnobs[i].onValueChange = [this, i] {
-        auto step = trackRef.getStepAtIndex(i);
-        int index = static_cast<int>(retriggerKnobs[i].getValue());
-        step.retrigger_rate = RetriggerValue[index];
-        trackRef.setStepAtIndex(i, step);
-      };
-
       addChildComponent(retriggerKnobs[i]);
     }
 

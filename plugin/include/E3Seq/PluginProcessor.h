@@ -43,20 +43,42 @@ public:
 
   void panic();
 
-  // treat this like a global instance
+  void savePreset(const juce::File& file);
+  void loadPreset(const juce::File& file);
+  void resetToDefaultState();
+
+  // global sequencer instance
   Sequencer::E3Sequencer sequencer;
 
   juce::MidiKeyboardState keyboardState;
 
+  // all recall-able sequencer parameters
+  juce::AudioProcessorValueTreeState parameters;
+
+  juce::UndoManager undoManager;
+
 private:
-  // remember to call this whenever BPM changes
+  juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+  std::atomic<float>* enabled_pointers[STEP_SEQ_NUM_TRACKS]
+                                      [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* note_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* velocity_pointers[STEP_SEQ_NUM_TRACKS]
+                                       [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* offset_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* length_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* retrigger_pointers[STEP_SEQ_NUM_TRACKS]
+                                        [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* probability_pointers[STEP_SEQ_NUM_TRACKS]
+                                          [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* alternate_pointers[STEP_SEQ_NUM_TRACKS]
+                                        [STEP_SEQ_MAX_LENGTH];
+
   juce::MidiMessageCollector guiMidiCollector;
   juce::MidiMessageCollector seqMidiCollector;
 
   std::unique_ptr<juce::MidiOutput> virtualMidiOut;
 
-  juce::AudioProcessorValueTreeState state; // TODO!    
-  
   double lastCallbackTime;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)

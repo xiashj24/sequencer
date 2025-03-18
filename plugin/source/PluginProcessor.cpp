@@ -15,6 +15,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
               ),
       sequencer(seqMidiCollector),
+      parameters(*this,
+                 &undoManager,
+                 "E3Seq",
+                 createParameterLayout()),  // TODO: undoManager
       lastCallbackTime(0.0) {
 // create virtual MIDI out (Mac only)
 #if JUCE_MAC
@@ -23,12 +27,148 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     virtualMidiOut->startBackgroundThread();
   }
 #endif
+
+  // store parameter pointers which can be safely accessed in timer thread
+  for (int track = 0; track < STEP_SEQ_NUM_TRACKS; ++track) {
+    for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
+      juce::String prefix =
+          "T" + juce::String(track) + "_S" + juce::String(step) + "_";
+      enabled_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "ENABLED");
+      note_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "NOTE");
+      velocity_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "VELOCITY");
+      offset_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "OFFSET");
+      length_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "LENGTH");
+      retrigger_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "RETRIGGER");
+      probability_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "PROBABILITY");
+      alternate_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "ALTERNATE");
+    }
+  }
+
+  sequencer.notifyProcessor = [this](int track_index, int step_index,
+                                     Sequencer::Step step) {
+    juce::String prefix =
+        "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
+    parameters.getParameter(prefix + "ENABLED")
+        ->setValueNotifyingHost(step.enabled);
+
+    auto p = parameters.getParameter(prefix + "NOTE");
+    p->setValueNotifyingHost(p->convertTo0to1(step.note));
+
+    p = parameters.getParameter(prefix + "VELOCITY");
+    p->setValueNotifyingHost(p->convertTo0to1(step.velocity));
+
+    p = parameters.getParameter(prefix + "OFFSET");
+    p->setValueNotifyingHost(p->convertTo0to1(step.offset));
+
+    p = parameters.getParameter(prefix + "LENGTH");
+    p->setValueNotifyingHost(p->convertTo0to1(step.length));
+
+    p = parameters.getParameter(prefix + "RETRIGGER");
+    p->setValueNotifyingHost(p->convertTo0to1(step.retrigger_rate));
+
+    p = parameters.getParameter(prefix + "PROBABILITY");
+    p->setValueNotifyingHost(p->convertTo0to1(step.probability));
+
+    p = parameters.getParameter(prefix + "ALTERNATE");
+    p->setValueNotifyingHost(p->convertTo0to1(step.alternate));
+  };
   startTimer(TIMER_INTERVAL_MS);
+}
+
+const juce::String OffsetText[] = {
+    "-1/2", "-11/24", "-5/12", "-3/8",  "-1/3", "-7/24", "-1/4", "-5/24",
+    "-1/6", "-1/8",   "-1/12", "-1/24", "0",    "1/24",  "1/12", "1/8",
+    "1/6",  "5/24",   "1/4",   "7/24",  "1/3",  "3/8",   "5/12", "11/24"};
+
+const juce::String RetriggerText[] = {
+    "Off", "1/12",  "1/6", "1/4",   "1/3", "5/12", "1/2", "7/12",  "2/3", "3/4",
+    "5/6", "11/12", "1",   "13/12", "7/6", "5/4",  "4/3", "17/12", "3/2"};
+
+juce::AudioProcessorValueTreeState::ParameterLayout
+AudioPluginAudioProcessor::createParameterLayout() {
+  using namespace juce;
+  AudioProcessorValueTreeState::ParameterLayout layout;
+  for (int track = 0; track < STEP_SEQ_NUM_TRACKS; ++track) {
+    for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
+      String prefix = "T" + String(track) + "_S" + String(step) + "_";
+      // MARK: parameter layout
+      layout.add(std::make_unique<AudioParameterBool>(prefix + "ENABLED",
+                                                      "Enabled", false));
+
+      layout.add(std::make_unique<AudioParameterInt>(
+          prefix + "NOTE", "Note", 21, 127, DEFAULT_NOTE, "Note",
+          [](int value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            return juce::MidiMessage::getMidiNoteName(value, true, true, 4);
+          }));
+
+      layout.add(std::make_unique<AudioParameterInt>(
+          prefix + "VELOCITY", "Velocity", 1, 127, DEFAULT_VELOCITY,
+          "Velocity"));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "OFFSET", "Offset",
+          NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f, "Offset",
+          juce::AudioProcessorParameter::genericParameter,
+          [](float value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            int index = static_cast<int>(value * 24) + 12;
+            return OffsetText[index];
+          }));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "LENGTH", "Length",
+          NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
+          DEFAULT_LENGTH, "Length"));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "RETRIGGER", "Retrigger Rate",
+          NormalisableRange<float>(0.f, 1.5f, 1.f / 12.f), 0.f, "Retrigger",
+          juce::AudioProcessorParameter::genericParameter,
+          [](float value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            int index = static_cast<int>(value * 12);
+            return RetriggerText[index];
+          }));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "PROBABILITY", "Probability",
+          NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f, "Probability"));
+
+      layout.add(std::make_unique<AudioParameterInt>(
+          prefix + "ALTERNATE", "Alternate", 1, 4, 1, "Alternate"));
+    }
+  }
+  return layout;
 }
 
 void AudioPluginAudioProcessor::hiResTimerCallback() {
   // ..sequencer logic here..
   constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
+
+  for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
+    for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
+      Sequencer::Step step{
+          .enabled = static_cast<bool>(*(enabled_pointers[i][j])),
+          .note = static_cast<int>(*(note_pointers[i][j])),
+          .velocity = static_cast<int>(*(velocity_pointers[i][j])),
+          .offset = *(offset_pointers[i][j]),
+          .length = *(length_pointers[i][j]),
+          .retrigger_rate = *(retrigger_pointers[i][j]),
+          .probability = *(probability_pointers[i][j]),
+          .alternate = static_cast<int>(*(alternate_pointers[i][j])),
+      };
+      sequencer.getTrack(i).setStepAtIndex(j, step, true);
+    }
+  }
   sequencer.process(deltaTime);
 }
 
@@ -49,12 +189,11 @@ const juce::String AudioPluginAudioProcessor::getName() const {
 }
 
 bool AudioPluginAudioProcessor::acceptsMidi() const {
-  // #if JucePlugin_WantsMidiInput
-  //   return true;
-  // #else
-  //   return false;
-  // #endif
+#if JucePlugin_WantsMidiInput
   return true;
+#else
+  return false;
+#endif
 }
 
 bool AudioPluginAudioProcessor::producesMidi() const {
@@ -78,8 +217,8 @@ double AudioPluginAudioProcessor::getTailLengthSeconds() const {
 }
 
 int AudioPluginAudioProcessor::getNumPrograms() {
-  return 1;  // NB: some hosts don't cope very well if you tell them there are 0
-             // programs, so this should be at least 1, even if you're not
+  return 1;  // NB: some hosts don't cope very well if you tell them there are
+             // 0 programs, so this should be at least 1, even if you're not
              // really implementing programs.
 }
 
@@ -172,7 +311,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // MARK: process MIDI
 
   // process MIDI start/stop/continue messages
-  // TODO: move this inside a separate MIDIMessageHandler
   for (const auto metadata : midiMessages) {
     auto message = metadata.getMessage();
 
@@ -180,18 +318,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     auto time_stamp_in_seconds =
         message.getTimeStamp() / getSampleRate() + lastCallbackTime;
 
-    // i donno why but using the more inaccurate getMillisecondCounter() seems
-    // to produce more precise timing
-
     if (message.isMidiStart()) {
       sequencer.start(time_stamp_in_seconds);
     } else if (message.isMidiStop()) {
       sequencer.stop();
     } else if (message.isMidiContinue()) {
-      sequencer.resume();  // TODO: resume will not work correctly due to change
-                           // of time keeping mechanism
+      sequencer.resume();
     }
-    // TODO: midi clock to bpm
+    // TODO: midi clock sync
     else if (message.isNoteOn()) {
       message.setTimeStamp(time_stamp_in_seconds);
       sequencer.handleNoteOn(message);
@@ -241,7 +375,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 }
 
 bool AudioPluginAudioProcessor::hasEditor() const {
-  return true;  // (change this to false if you choose to not supply an editor)
+  return true;  // (change this to false if you choose to not supply an
+                // editor)
 }
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor() {
@@ -253,7 +388,13 @@ void AudioPluginAudioProcessor::getStateInformation(
   // You should use this method to store your parameters in the memory block.
   // You could do that either as raw data, or use the XML or ValueTree classes
   // as intermediaries to make it easy to save and load complex data.
-  juce::ignoreUnused(destData);
+
+  if (this->wrapperType ==
+      juce::AudioProcessor::WrapperType::wrapperType_Standalone)
+    return;  // only recall parameters if run inside a DAW
+  auto state = parameters.copyState();
+  std::unique_ptr<juce::XmlElement> xml(state.createXml());
+  copyXmlToBinary(*xml, destData);
 }
 
 void AudioPluginAudioProcessor::setStateInformation(const void* data,
@@ -261,7 +402,30 @@ void AudioPluginAudioProcessor::setStateInformation(const void* data,
   // You should use this method to restore your parameters from this memory
   // block, whose contents will have been created by the getStateInformation()
   // call.
-  juce::ignoreUnused(data, sizeInBytes);
+  std::unique_ptr<juce::XmlElement> xmlState(
+      getXmlFromBinary(data, sizeInBytes));
+  if (xmlState.get() != nullptr) {
+    if (xmlState->hasTagName(parameters.state.getType())) {
+      parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
+    }
+  }
+}
+
+void AudioPluginAudioProcessor::savePreset(const juce::File& file) {
+  auto state = parameters.copyState();
+  std::unique_ptr<juce::XmlElement> xml(state.createXml());
+  xml->writeTo(file);
+}
+
+void AudioPluginAudioProcessor::loadPreset(const juce::File& file) {
+  std::unique_ptr<juce::XmlElement> xml = juce::XmlDocument::parse(file);
+  if (xml != nullptr && xml->hasTagName(parameters.state.getType())) {
+    parameters.replaceState(juce::ValueTree::fromXml(*xml));
+  }
+}
+
+void AudioPluginAudioProcessor::resetToDefaultState() {
+  parameters.replaceState(juce::ValueTree(parameters.state.getType()));
 }
 
 }  // namespace audio_plugin

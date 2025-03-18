@@ -12,24 +12,7 @@
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
 // TODO: Doxygen documentation
-
-// PARAMETERS
-
-// --- track parameters ---
-// Length: 1..16..128
-// Playback mode: forward/backward/random/bounce/brownian
-
-// --- step parameters ---
-// Note: 0..127
-// Gate: 0..100%..16..TIE  // quantized to 1/24 in (0,1)
-// Velocity: 0..127
-// Offset: 0..100%
-// Roll:  1/2/3/4 (Do we need more?)
-// Probablity: 0..100%
-// Alternate: 1/2/3/4 (Do we need more?)
-
-// (do not implement for now, as this is a keyboard centric parameter)
-// Pitchbend: -50%..50% (TODO: need to learn more on MIDI spec on this)
+// TODO: add example code
 
 #define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
 #define BPM_DEFAULT 120
@@ -45,7 +28,6 @@
   rate over 2000Hz), otherwise timing precision suffers
 */
 
-// TODO: add example code
 
 namespace Sequencer {
 
@@ -94,10 +76,11 @@ public:
   // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
   void process(double deltaTime);
 
+  // the PluginProcessor should register a callback to update the APVTS
+  std::function<void(int track_index, int step_index, Step step)> notifyProcessor;
+
   // tick-based timekeeping for MIDI clock sync
   // void tick(juce::MidiMessageCollector& collector);
-
-  // TODO: presets based on JSON or Protobuf
 private:
   // seqencer parameters here
   double bpm_;
@@ -114,7 +97,7 @@ private:
   double timeSinceStart_;
   double startTime_;
 
-  std::optional<juce::MidiMessage> lastNoteOnEachKey_[STEP_SEQ_MAX_LENGTH];
+  std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
   Track tracks_[STEP_SEQ_NUM_TRACKS];
 };

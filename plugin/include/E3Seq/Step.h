@@ -9,8 +9,6 @@
 // available reference:
 // https://chatgpt.com/share/67be979a-48d4-800a-bab9-1e7c5f8ea9d9
 
-// TODO: put every parameter min and max into here
-
 namespace Sequencer {
 
 // TODO: use Note[polyphony] inside Step
@@ -31,7 +29,7 @@ struct Step {
                                   // should be smaller than track length
 
   float retrigger_rate = 0.0;  // in fractional steps (internally quantized
-                                   // to ticks), 0.0 means no retrigger
+                               // to ticks), 0.0 means no retrigger
   float probability = 1.0;
   int alternate = 1;
   int count = 0;
