@@ -127,7 +127,7 @@ AudioPluginAudioProcessor::createParameterLayout() {
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "LENGTH", "Length",
           NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
-          DEFAULT_LENGTH, "Length"));
+          static_cast<float>(DEFAULT_LENGTH), "Length"));
 
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "RETRIGGER", "Retrigger Rate",
