@@ -20,14 +20,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                  "E3Seq",
                  createParameterLayout()),  // TODO: undoManager
       lastCallbackTime(0.0) {
-// create virtual MIDI out (Mac only)
 #if JUCE_MAC
+  // create virtual MIDI out (Mac only)
   virtualMidiOut = juce::MidiOutput::createNewDevice("E3 Sequencer MIDI Out");
   if (virtualMidiOut) {
     virtualMidiOut->startBackgroundThread();
   }
 #endif
-
   // store parameter pointers which can be safely accessed in timer thread
   for (int track = 0; track < STEP_SEQ_NUM_TRACKS; ++track) {
     for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
@@ -150,8 +149,8 @@ AudioPluginAudioProcessor::createParameterLayout() {
           prefix + "PROBABILITY", "Probability",
           NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f));
 
-      layout.add(std::make_unique<AudioParameterInt>(
-          prefix + "ALTERNATE", "Alternate", 1, 4, 1));
+      layout.add(std::make_unique<AudioParameterInt>(prefix + "ALTERNATE",
+                                                     "Alternate", 1, 4, 1));
     }
   }
   return layout;

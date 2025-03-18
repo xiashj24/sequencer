@@ -86,6 +86,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                            juce::Colours::orangered);
     recordButton.onClick = [this] {
+      processorRef.undoManager.beginNewTransaction();
       processorRef.sequencer.setArmed(recordButton.getToggleState());
     };
     addAndMakeVisible(recordButton);
