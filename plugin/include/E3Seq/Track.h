@@ -3,7 +3,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>  // juce::MidiMessageSequence
 
 /*
-  core functionality of a one track sequencer
+  core functionality of a one track monophonic sequencer
 
   created by Shijie Xia in 2025/2
   maintained by {put your name here if you have to maintain this} in {date}
@@ -11,28 +11,16 @@
   Please allow me to rant a little about the coding culture in Korg
   that every file seems to be created and maintained by a single programmer
   and no one seems to care about writing good documentations or enforcing good
-  coding styles. This leads to the bloated and cryptic codebase that Spark is
-  and no one seems to understand the big picture :(
+  coding styles, which leads to the bloated and cryptic codebase that Spark is
+  :(
 */
 
-/*
-  Guide for runtime testing: modidy a step's parameter while the sequencer is
-  running and make sure no noteOff is missing
-*/
-
-// TODO: per track swing
-
-// Note: polyphony will probably have to be implemented simply as
-// {MAX_POLYPHONY} mono tracks use a separate assigner class to handle note
-// stealing and overdubbing between different tracks?
-
-#define STEP_SEQ_MAX_LENGTH 16  // TODO: support as large as 128
+#define STEP_SEQ_MAX_LENGTH 16  // TODO: test as large as 128
 #define STEP_SEQ_DEFAULT_LENGTH 16
 #define MAX_MOTION_SLOTS 8  // not used now
 #define TICKS_PER_STEP 24   // one step is broken into {TICKS_PER_STEP} ticks
-
-// TICKS_PER_STEP over 24 make little sense since tick() is not
-// called frequently enough to achieve such precision
+// note: TICKS_PER_STEP over 24 makes little sense since tick() need to be
+// called more frequently than 1kHz to achieve such precision
 
 namespace Sequencer {
 
@@ -61,13 +49,16 @@ public:
   // caller should register a callback to receive MIDI messages
   std::function<void(juce::MidiMessage msg)> sendMidiMessage;
 
-  // this function should be called {TICKS_PER_STEP} times per step
+  // this function should be called (on average) {TICKS_PER_STEP} times per step
+  // some amount of time jittering should be fine
   void tick();
 
-  void returnToStart();
+  void returnToStart();  // for resync
 
   Step getStepAtIndex(int index) const { return steps_[index]; }
-  void setStepAtIndex(int index, Step step, bool ignore_alternate_count = false);
+  void setStepAtIndex(int index,
+                      Step step,
+                      bool ignore_alternate_count = false);
 
   int getCurrentStepIndex() const;
 
@@ -84,10 +75,11 @@ private:
   bool legato_;
   [[maybe_unused]] float
       swing_;  // TODO: implement swing (should not affect roll)
-  [[maybe_unused]] bool resync_to_longest_track_;  // or master length
+  [[maybe_unused]] bool resync_to_longest_track_;  // or master length?
 
-  // function-related variables
   bool enabled_;
+
+  // functiona related variables
   int tick_;
   Step steps_[STEP_SEQ_MAX_LENGTH];
 
@@ -101,11 +93,11 @@ private:
   int getStepNoteOnTick(int index) const;
   int getStepNoteOffTick(int index) const;
 
-  // double MIDI buffer loosely inspired by the endless scrolling
+  // double MIDI buffer inspired by the endless scrolling
   // background technique in early arcade games
   // invariant: MIDI messages are always sorted by timestamp
-  // note: when porting to Spark, change from juce::MidiMessageSequence to a
-  // simpler data structure
+  // note: when porting to Spark/Prologue, change from juce::MidiMessageSequence
+  // to a more performant data structure
   juce::MidiMessageSequence firstRun_;
   juce::MidiMessageSequence secondRun_;
 };

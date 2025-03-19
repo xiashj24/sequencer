@@ -28,7 +28,6 @@
   rate over 2000Hz), otherwise timing precision suffers
 */
 
-
 namespace Sequencer {
 
 class E3Sequencer {

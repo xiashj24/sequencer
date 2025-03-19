@@ -68,7 +68,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     addAndMakeVisible(playButton);
 
     stopButton.setButtonText(juce::String::fromUTF8("⏹Stop"));
-    stopButton.addShortcut(juce::KeyPress(115));  // "s"
+    stopButton.addShortcut(juce::KeyPress('s'));
     stopButton.setTooltip("stop playback and move to start position (s)");
     stopButton.onClick = [this] {
       processorRef.sequencer.start(juce::Time::getMillisecondCounterHiRes() *
@@ -81,7 +81,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
     recordButton.setButtonText(juce::String::fromUTF8("⏺Rec"));
     recordButton.setClickingTogglesState(true);
-    recordButton.addShortcut(juce::KeyPress(114));
+    recordButton.addShortcut(juce::KeyPress('r'));
     recordButton.setTooltip("toggle real-time recording (r)");
     recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                            juce::Colours::orangered);
@@ -96,7 +96,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   quantizeButton.setClickingTogglesState(true);
   quantizeButton.setTooltip(
       "quantize note-on timing for real-time recording (q)");
-  quantizeButton.addShortcut(juce::KeyPress(113));
+  quantizeButton.addShortcut(juce::KeyPress('q'));
   quantizeButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                            juce::Colours::orangered);
   quantizeButton.onClick = [this] {

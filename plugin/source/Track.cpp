@@ -4,6 +4,7 @@ namespace Sequencer {
 
 // TODO: setStepAtIndex will cause a data race between the message thread and
 // the audio thread, better have a (non-blocking) solution for that
+// refer to Dave Rowland real time ADC talk
 
 int Track::getCurrentStepIndex() const {
   return (tick_ + half_step_ticks) / TICKS_PER_STEP;
@@ -99,6 +100,10 @@ void Track::renderStep(int index) {
         channel_, step.note, (juce::uint8)step.velocity);
     note_off_message.setTimeStamp(note_off_tick);
     renderMidiMessage(note_off_message);
+
+    // TODO: for polyphonic sequencers, after step rendering
+    // update matched note on&off pair in MIDI buffer to ensure later steps do
+    // not get accidentally turned off in advance
   }
 }
 
@@ -125,12 +130,12 @@ void Track::tick() {
     }
   }
 
-  // advance ticks and wrap up from (length-0.5) to (-0.5) step
-  // because the first step could start from negative ticks
+  // advance ticks and overwrap from (length-0.5) to (-0.5) step
+  // because the first step could start from negative steps
   tick_ += 1;
   if (tick_ == trackLength_ * TICKS_PER_STEP - half_step_ticks) {
     tick_ = -half_step_ticks;
-    // move the second run's Midi events to the first run
+    // move second run into first run
     firstRun_.swapWith(secondRun_);
     secondRun_.clear();
   }
