@@ -18,8 +18,8 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       midiCollector_(midiCollector) {
   // MARK: track config
   for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
-    getTrack(i).setChannel(i + 1);
-    getTrack(i).sendMidiMessage = [this](juce::MidiMessage msg) {
+    getMonoTrack(i).setChannel(i + 1);
+    getMonoTrack(i).sendMidiMessage = [this](juce::MidiMessage msg) {
       // time translation
       int tick = (int)msg.getTimeStamp();
       double real_time_stamp = startTime_ + getOneTickTime() * tick;
@@ -71,13 +71,15 @@ void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
 }
 
 void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
+  // TODO: handle real time rec for poly tracks
+
   // find corresponding note on
-  int note = noteOff.getNoteNumber();
+  int note_number = noteOff.getNoteNumber();
   int channel = noteOff.getChannel();
   for (int index = 0; index < STEP_SEQ_MAX_LENGTH; ++index) {
     if (lastNoteOn_[index].has_value()) {
       auto noteOn = lastNoteOn_[index].value();
-      if (noteOn.getNoteNumber() == note && noteOn.getChannel() == channel) {
+      if (noteOn.getNoteNumber() == note_number && noteOn.getChannel() == channel) {
         // calculate offset and length
 
         double offset = 0.0;
@@ -90,12 +92,12 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
             (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();
         length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
 
-        Step step{.enabled = true,
-                  .note = note,
-                  .velocity = noteOn.getVelocity(),
-                  .offset = static_cast<float>(offset),
-                  .length = static_cast<float>(length)};
-        getTrack(channel - 1).setStepAtIndex(index, step);
+        MonoStep step{.enabled = true,
+                      .note.number = note_number,
+                      .note.velocity = noteOn.getVelocity(),
+                      .note.offset = static_cast<float>(offset),
+                      .note.length = static_cast<float>(length)};
+        getMonoTrack(channel - 1).setStepAtIndex(index, step);
         // notify AudioProcessor about parameter change
         notifyProcessor(channel - 1, index, step);
         lastNoteOn_[index].reset();

@@ -7,8 +7,7 @@
 // note : avoid JUCE API and cpp STL inside this class
 
 #pragma once
-#include "E3Seq/Step.h"
-#include "E3Seq/Track.h"
+#include "E3Seq/MonoTrack.h"
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
 // TODO: Doxygen documentation
@@ -70,13 +69,21 @@ public:
   void handleNoteOn(juce::MidiMessage noteOn);
   void handleNoteOff(juce::MidiMessage noteOff);
 
-  // sequencer programming interface
   Track& getTrack(int index) { return tracks_[index]; }
+
+  // sequencer programming interface
+  MonoTrack& getMonoTrack(int index) {
+    // what should we do if tracks_[index] is not a mono track?
+    return tracks_[index];
+  }
+  // TODO: poly track programming interface
+
   // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
   void process(double deltaTime);
 
   // the PluginProcessor should register a callback to update the APVTS
-  std::function<void(int track_index, int step_index, Step step)> notifyProcessor;
+  std::function<void(int track_index, int step_index, MonoStep step)>
+      notifyProcessor;
 
   // tick-based timekeeping for MIDI clock sync
   // void tick(juce::MidiMessageCollector& collector);
@@ -98,7 +105,7 @@ private:
 
   std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
-  Track tracks_[STEP_SEQ_NUM_TRACKS];
+  MonoTrack tracks_[STEP_SEQ_NUM_TRACKS];
 };
 
 }  // namespace Sequencer

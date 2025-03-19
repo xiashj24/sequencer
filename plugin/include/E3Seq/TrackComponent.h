@@ -10,15 +10,15 @@ namespace audio_plugin {
 #define KNOB_HEIGHT 90
 #define KNOB_TEXT_HEIGHT 20
 
+// TODO: make this mono track component, and create a new poly track component
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
   TrackComponent(AudioPluginAudioProcessor& p,
                  int trackNumber,
                  juce::Colour trackColor)
       : processorRef(p),
-        trackRef(p.sequencer.getTrack(trackNumber)),
+        trackRef(p.sequencer.getMonoTrack(trackNumber)),
         trackNumber_(trackNumber) {
-
     startTimer(10);
 
     setCollapsed(true);

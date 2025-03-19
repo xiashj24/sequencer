@@ -8,14 +8,17 @@
 
 namespace Sequencer {
 
-struct Step {
-  bool enabled = false;
-
-  int note = DEFAULT_NOTE;
+struct Note {
+  int number = DEFAULT_NOTE;
   int velocity = DEFAULT_VELOCITY;
   float offset = 0.f;
-  float length = DEFAULT_LENGTH;  // note: can be greater than 1 but
-                                  // should be smaller than track length
+  float length = DEFAULT_LENGTH;  // in (0, TrackLength]
+};
+
+struct MonoStep {
+  bool enabled = false;
+
+  Note note;
 
   float retrigger_rate = 0.f;  // 0 (and minus values) means no retrigger
   float probability = 1.f;
@@ -23,22 +26,16 @@ struct Step {
   int count = 0;
 };
 
-struct Note {
-  int number;
-  int velocity;
-  float offset;
-  float length;
-};
-
 struct PolyStep {
   bool enabled = false;
 
   Note notes[POLYPHONY];
 
-  // note: no retrigger
-  
+  // note: no retrigger for now
+  // maybe interesting to have a arp generator inside polystep
+
   float probability = 1.f;
-  int alternate = 1;
+  int alternate = 1;  // I think only one of these will remain in poly step
   int count = 0;
 };
 

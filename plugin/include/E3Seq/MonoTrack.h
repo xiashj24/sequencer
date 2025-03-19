@@ -9,9 +9,107 @@
 namespace Sequencer {
 class MonoTrack : public Track {
 public:
+  MonoTrack(int channel = 1,
+            int length = STEP_SEQ_DEFAULT_LENGTH,
+            PlayMode mode = PlayMode::Forward)
+      : Track(channel, length, mode) {}
+
+  MonoStep getStepAtIndex(int index) const { return steps_[index]; }
+
+  void setStepAtIndex(int index,
+                      MonoStep step,
+                      bool ignore_alternate_count = false) {
+    if (ignore_alternate_count) {
+      step.count = steps_[index].count;
+    }
+
+    steps_[index] = step;
+  }
 
 private:
+  MonoStep steps_[STEP_SEQ_MAX_LENGTH];
 
+  int getStepNoteOnTick(int index) const {
+    return static_cast<int>((index + steps_[index].note.offset) *
+                            TICKS_PER_STEP);
+  }
 
+  int getStepNoteOffTick(int index) const {
+    return static_cast<int>(
+        (index + steps_[index].note.offset + steps_[index].note.length) *
+        TICKS_PER_STEP);
+  }
+
+  int getStepRenderTick(int index) const override final {
+    return getStepNoteOnTick(index);
+  }
+
+  void renderStep(int index) override final {
+    auto& step = steps_[index];
+    if (step.enabled) {
+      // alternate check
+      if ((step.count++) % step.alternate != 0) {
+        return;
+      }
+
+      // probability check
+      if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {
+        return;
+      }
+
+      int note_on_tick = getStepNoteOnTick(index);
+      int note_off_tick = getStepNoteOffTick(index);
+
+      // force note off before the next active step
+      int next_active_step_index = (index + 1) % getLength();
+      while (!getStepAtIndex(next_active_step_index).enabled) {
+        next_active_step_index = (next_active_step_index + 1) % getLength();
+      }
+
+      if (next_active_step_index > index) {
+        note_off_tick =
+            std::min(note_off_tick, getStepNoteOnTick(next_active_step_index));
+      } else if (next_active_step_index < index) {
+        note_off_tick = std::min(
+            note_off_tick, getStepNoteOnTick(next_active_step_index) +
+                               TICKS_PER_STEP * getLength());  // is this ok?
+      }
+
+      // note on
+      juce::MidiMessage note_on_message = juce::MidiMessage::noteOn(
+          getChannel(), step.note.number, (juce::uint8)step.note.velocity);
+      note_on_message.setTimeStamp(note_on_tick);
+      renderMidiMessage(note_on_message);
+
+      // retrigger
+      if (step.retrigger_rate > 0.0) {
+        int retrigger_interval_in_ticks =
+            static_cast<int>(step.retrigger_rate * TICKS_PER_STEP);
+        for (int tick = note_on_tick + retrigger_interval_in_ticks;
+             tick < note_off_tick; tick += retrigger_interval_in_ticks) {
+          juce::MidiMessage retrigger_note_off_message =
+              juce::MidiMessage::noteOff(getChannel(), step.note.number,
+                                         (juce::uint8)step.note.velocity);
+          retrigger_note_off_message.setTimeStamp(tick);
+          juce::MidiMessage retrigger_note_on_message =
+              juce::MidiMessage::noteOn(getChannel(), step.note.number,
+                                        (juce::uint8)step.note.velocity);
+          retrigger_note_on_message.setTimeStamp(tick);
+          renderMidiMessage(retrigger_note_off_message);
+          renderMidiMessage(retrigger_note_on_message);
+        }
+      }
+
+      // note off
+      juce::MidiMessage note_off_message = juce::MidiMessage::noteOff(
+          getChannel(), step.note.number, (juce::uint8)step.note.velocity);
+      note_off_message.setTimeStamp(note_off_tick);
+      renderMidiMessage(note_off_message);
+
+      // TODO: for polyphonic sequencers, after step rendering
+      // update matched note on&off pair in MIDI buffer to ensure later steps do
+      // not get accidentally turned off in advance
+    }
+  }
 };
 }  // namespace Sequencer

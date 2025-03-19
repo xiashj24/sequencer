@@ -52,24 +52,25 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
   }
 
   sequencer.notifyProcessor = [this](int track_index, int step_index,
-                                     Sequencer::Step step) {
+                                     Sequencer::MonoStep step) {
     juce::String prefix =
         "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
     parameters.getParameter(prefix + "ENABLED")
         ->setValueNotifyingHost(static_cast<float>(step.enabled));
 
     auto p = parameters.getParameter(prefix + "NOTE");
-    p->setValueNotifyingHost(p->convertTo0to1(static_cast<float>(step.note)));
+    p->setValueNotifyingHost(
+        p->convertTo0to1(static_cast<float>(step.note.number)));
 
     p = parameters.getParameter(prefix + "VELOCITY");
     p->setValueNotifyingHost(
-        p->convertTo0to1(static_cast<float>(step.velocity)));
+        p->convertTo0to1(static_cast<float>(step.note.velocity)));
 
     p = parameters.getParameter(prefix + "OFFSET");
-    p->setValueNotifyingHost(p->convertTo0to1(step.offset));
+    p->setValueNotifyingHost(p->convertTo0to1(step.note.offset));
 
     p = parameters.getParameter(prefix + "LENGTH");
-    p->setValueNotifyingHost(p->convertTo0to1(step.length));
+    p->setValueNotifyingHost(p->convertTo0to1(step.note.length));
 
     p = parameters.getParameter(prefix + "RETRIGGER");
     p->setValueNotifyingHost(p->convertTo0to1(step.retrigger_rate));
@@ -160,19 +161,20 @@ void AudioPluginAudioProcessor::hiResTimerCallback() {
   // ..sequencer logic here..
   constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
 
+  // TODO: support poly tracks
   for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
     for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
-      Sequencer::Step step{
+      Sequencer::MonoStep step{
           .enabled = static_cast<bool>(*(enabled_pointers[i][j])),
-          .note = static_cast<int>(*(note_pointers[i][j])),
-          .velocity = static_cast<int>(*(velocity_pointers[i][j])),
-          .offset = *(offset_pointers[i][j]),
-          .length = *(length_pointers[i][j]),
+          .note.number = static_cast<int>(*(note_pointers[i][j])),
+          .note.velocity = static_cast<int>(*(velocity_pointers[i][j])),
+          .note.offset = *(offset_pointers[i][j]),
+          .note.length = *(length_pointers[i][j]),
           .retrigger_rate = *(retrigger_pointers[i][j]),
           .probability = *(probability_pointers[i][j]),
           .alternate = static_cast<int>(*(alternate_pointers[i][j])),
       };
-      sequencer.getTrack(i).setStepAtIndex(j, step, true);
+      sequencer.getMonoTrack(i).setStepAtIndex(j, step, true);
     }
   }
   sequencer.process(deltaTime);

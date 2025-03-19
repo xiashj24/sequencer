@@ -26,24 +26,37 @@ namespace Sequencer {
 
 class Track {
 public:
-  enum class PlayMode { Forward, Backward, Random, Bounce, Brownian };
+  enum class PlayMode {
+    Forward,
+    Backward,
+    Random,
+    Bounce,
+    Brownian
+  };  // unused now
 
   Track(int channel = 1,
-        int len = STEP_SEQ_DEFAULT_LENGTH,
-        PlayMode mode = PlayMode::Forward,
-        bool legato = false)
+        int length = STEP_SEQ_DEFAULT_LENGTH,
+        PlayMode mode = PlayMode::Forward)
       : channel_(channel),
-        trackLength_(len),
+        trackLength_(length),
         playMode_(mode),
-        legato_(legato),
         enabled_(true),
         tick_(0) {}
 
+  ~Track() = default;
+
   void setEnabled(bool enabled) { enabled_ = enabled; }
   void setChannel(int channel) { channel_ = channel; }
+  /*
+    early worrying note:
+    when setLength(length) is called and length > current play position
+    some kind of additonal processing might be needed to ensure that everything
+    plays nicely in sync
+    will revisit this when I start implement polymeter
+  */
   void setLength(int length) { trackLength_ = length; }
   int getChannel() const { return channel_; }
-  bool isEnabled() const { return enabled_; }
+  bool getIsEnabled() const { return enabled_; }
   int getLength() const { return trackLength_; }
 
   // caller should register a callback to receive MIDI messages
@@ -55,15 +68,14 @@ public:
 
   void returnToStart();  // for resync
 
-  Step getStepAtIndex(int index) const { return steps_[index]; }
-  void setStepAtIndex(int index,
-                      Step step,
-                      bool ignore_alternate_count = false);
-
-  int getCurrentStepIndex() const;
+  int getCurrentStepIndex() const;  // exposed to GUI to show play position
 
   // TODO: track utilities (randomize, humanize, rotate, Euclidean, Grids,
   // etc.)
+
+protected:
+  // timestamp in ticks (not seconds or samples)
+  void renderMidiMessage(juce::MidiMessage message);
 
 private:
   int channel_;
@@ -72,26 +84,20 @@ private:
 
   int trackLength_;
   [[maybe_unused]] PlayMode playMode_;
-  bool legato_;
-  [[maybe_unused]] float
-      swing_;  // TODO: implement swing (should not affect roll)
+  // TODO: implement swing (should not affect roll)
+  [[maybe_unused]] float swing_;
   [[maybe_unused]] bool resync_to_longest_track_;  // or master length?
 
   bool enabled_;
 
   // functiona related variables
   int tick_;
-  Step steps_[STEP_SEQ_MAX_LENGTH];
 
-  static constexpr int half_step_ticks = TICKS_PER_STEP / 2;
+  static constexpr int HALF_STEP_TCIKS = TICKS_PER_STEP / 2;
 
-  void renderStep(int index);
-
-  // timestamp is in ticks (not seconds or samples)
-  void renderMidiMessage(juce::MidiMessage message);
-
-  int getStepNoteOnTick(int index) const;
-  int getStepNoteOffTick(int index) const;
+  // derived class must implement renderStep and getStepNoteRenderTick
+  virtual void renderStep(int index) = 0;
+  virtual int getStepRenderTick(int index) const = 0;
 
   // double MIDI buffer inspired by the endless scrolling
   // background technique in early arcade games
