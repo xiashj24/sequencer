@@ -53,6 +53,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
   sequencer.notifyProcessor = [this](int track_index, int step_index,
                                      Sequencer::MonoStep step) {
+
+    undoManager.beginNewTransaction("Live recording note");
+    
     juce::String prefix =
         "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
     parameters.getParameter(prefix + "ENABLED")
