@@ -19,7 +19,7 @@ public:
                {p, 2, ColourPalette[2]}, {p, 3, ColourPalette[3]},
                {p, 4, ColourPalette[4]}, {p, 5, ColourPalette[5]},
                {p, 6, ColourPalette[6]}, {p, 7, ColourPalette[7]}} {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; ++i) {
       addAndMakeVisible(tracks[i]);
     }
     updateSize();
@@ -27,7 +27,7 @@ public:
 
   void resized() override final {
     int lastX = 0, lastY = 0;
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; ++i) {
       tracks[i].setBounds(lastX, lastY, tracks[i].getWidth(),
                           tracks[i].getHeight());
       lastY += tracks[i].getHeight() + 10;

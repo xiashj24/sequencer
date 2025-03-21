@@ -8,12 +8,16 @@
 
 #pragma once
 #include "E3Seq/MonoTrack.h"
+#include "E3Seq/PolyTrack.h"
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
 // TODO: Doxygen documentation
 // TODO: add example code
 
-#define STEP_SEQ_NUM_TRACKS 8  // as defined by the product specs
+#define STEP_SEQ_NUM_MONO_TRACKS 8
+#define STEP_SEQ_NUM_POLY_TRACKS 4
+#define STEP_SEQ_NUM_TRACKS \
+  (STEP_SEQ_NUM_MONO_TRACKS + STEP_SEQ_NUM_POLY_TRACKS)
 #define BPM_DEFAULT 120
 #define BPM_MAX 240
 #define BPM_MIN 30
@@ -54,7 +58,7 @@ public:
   // send allNoteOff to all tracks immediately
   // note: this is probably not the right way to do it, will refactor later
   void panic() {
-    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; i++) {
+    for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
       auto msg = juce::MidiMessage::allNotesOff(i + 1);
       msg.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
       midiCollector_.addMessageToQueue(msg);
@@ -69,19 +73,26 @@ public:
   void handleNoteOn(juce::MidiMessage noteOn);
   void handleNoteOff(juce::MidiMessage noteOff);
 
-  Track& getTrack(int index) { return tracks_[index]; }
+  Track& getTrack(int channel) {
+    if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
+      return getMonoTrack(channel);
+    } else {
+      return getPolyTrack(channel);
+    }
+  }
 
   // sequencer programming interface
-  MonoTrack& getMonoTrack(int index) {
-    // what should we do if tracks_[index] is not a mono track?
-    return tracks_[index];
+  MonoTrack& getMonoTrack(int channel) { return monoTracks_[channel - 1]; }
+
+  PolyTrack& getPolyTrack(int channel) {
+    return polyTracks_[channel - 1 - STEP_SEQ_NUM_POLY_TRACKS];
   }
-  // TODO: poly track programming interface
 
   // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
   void process(double deltaTime);
 
-  // the PluginProcessor should register a callback to update the APVTS
+  // TODO: use pure virtual function as opposed to callback approach
+  // PluginProcessor should register a callback to update APVTS
   std::function<void(int track_index, int step_index, MonoStep step)>
       notifyProcessor;
 
@@ -105,7 +116,8 @@ private:
 
   std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
-  MonoTrack tracks_[STEP_SEQ_NUM_TRACKS];
+  MonoTrack monoTracks_[STEP_SEQ_NUM_MONO_TRACKS];
+  PolyTrack polyTracks_[STEP_SEQ_NUM_POLY_TRACKS];
 };
 
 }  // namespace Sequencer

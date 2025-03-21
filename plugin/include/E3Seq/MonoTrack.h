@@ -4,6 +4,7 @@
 // note: maybe it makes sense to inherit from Track to create mono track and
 // make track Abstract
 
+#include "E3Seq/Step.h"
 #include "E3Seq/Track.h"
 
 namespace Sequencer {
@@ -44,6 +45,10 @@ private:
     return getStepNoteOnTick(index);
   }
 
+  // TODO: refactor this to use renderNote instead of renderMidiMessage
+  // need to implement a separate midi effect (retrigger) to process outcoming
+  // midi messages and incorporate that into the step parameter
+  // after that, make renderMidiMessage private instead of protected
   void renderStep(int index) override final {
     auto& step = steps_[index];
     if (step.enabled) {
@@ -105,10 +110,6 @@ private:
           getChannel(), step.note.number, (juce::uint8)step.note.velocity);
       note_off_message.setTimeStamp(note_off_tick);
       renderMidiMessage(note_off_message);
-
-      // TODO: for polyphonic sequencers, after step rendering
-      // update matched note on&off pair in MIDI buffer to ensure later steps do
-      // not get accidentally turned off in advance
     }
   }
 };

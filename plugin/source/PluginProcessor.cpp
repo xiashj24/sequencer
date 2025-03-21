@@ -55,7 +55,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                                      Sequencer::MonoStep step) {
 
     undoManager.beginNewTransaction("Live recording note");
-    
+
     juce::String prefix =
         "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
     parameters.getParameter(prefix + "ENABLED")
@@ -184,7 +184,7 @@ void AudioPluginAudioProcessor::hiResTimerCallback() {
 }
 
 void AudioPluginAudioProcessor::panic() {
-  for (int i = 0; i < 16; i++) {
+  for (int i = 0; i < 16; ++i) {
     auto message = juce::MidiMessage::allNotesOff(i + 1);
     message.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
     guiMidiCollector.addMessageToQueue(message);

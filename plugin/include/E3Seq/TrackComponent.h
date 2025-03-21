@@ -31,7 +31,7 @@ public:
     };
 
     // step buttons
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       stepButtons[i].setButtonText(juce::String(i + 1));
       stepButtons[i].setClickingTogglesState(true);
       stepButtons[i].setColour(juce::TextButton::ColourIds::buttonOnColourId,
@@ -55,7 +55,7 @@ public:
     noteLabel.setText("note", juce::NotificationType::dontSendNotification);
     addAndMakeVisible(noteLabel);
 
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       noteKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
       noteKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                    STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -66,7 +66,7 @@ public:
     velocityLabel.setText("velocity",
                           juce::NotificationType::dontSendNotification);
     addAndMakeVisible(velocityLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       velocityKnobs[i].setSliderStyle(juce::Slider::LinearVertical);
       velocityKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                        STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -76,7 +76,7 @@ public:
     // offset
     offsetLabel.setText("offset", juce::NotificationType::dontSendNotification);
     addAndMakeVisible(offsetLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       offsetKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       offsetKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -86,7 +86,7 @@ public:
     // length
     lengthLabel.setText("length", juce::NotificationType::dontSendNotification);
     addAndMakeVisible(lengthLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       lengthKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       lengthKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                      STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -99,7 +99,7 @@ public:
     retriggerLabel.setText("retrigger",
                            juce::NotificationType::dontSendNotification);
     addAndMakeVisible(retriggerLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       retriggerKnobs[i].setSliderStyle(juce::Slider::LinearHorizontal);
       retriggerKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -110,7 +110,7 @@ public:
     probabilityLabel.setText("probability",
                              juce::NotificationType::dontSendNotification);
     addAndMakeVisible(probabilityLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       probabilityKnobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
       probabilityKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                           STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -121,7 +121,7 @@ public:
     alternateLabel.setText("alternate",
                            juce::NotificationType::dontSendNotification);
     addAndMakeVisible(alternateLabel);
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       alternateKnobs[i].setSliderStyle(juce::Slider::LinearVertical);
       alternateKnobs[i].setTextBoxStyle(juce::Slider::TextBoxBelow, false,
                                         STEP_BUTTON_WIDTH, KNOB_TEXT_HEIGHT);
@@ -130,7 +130,7 @@ public:
     }
 
     // attach buttons and sliders to processor parameters
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       juce::String prefix =
           "T" + juce::String(trackNumber_) + "_S" + juce::String(i) + "_";
 
@@ -190,7 +190,7 @@ public:
     alternateLabel.setBounds(0, STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 6,
                              STEP_BUTTON_WIDTH, KNOB_HEIGHT);
 
-    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; i++) {
+    for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       int x = (i + 1) * (STEP_BUTTON_WIDTH + STEP_BUTTON_SPACING);
       stepButtons[i].setBounds(x, 0, STEP_BUTTON_WIDTH, STEP_BUTTON_HEIGHT);
       noteKnobs[i].setBounds(x, STEP_BUTTON_HEIGHT, STEP_BUTTON_WIDTH,

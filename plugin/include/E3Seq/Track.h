@@ -15,12 +15,13 @@
   :(
 */
 
+// TODO: make this a static const variable of TRACK
 #define STEP_SEQ_MAX_LENGTH 16  // TODO: test as large as 128
 #define STEP_SEQ_DEFAULT_LENGTH 16
 #define MAX_MOTION_SLOTS 8  // not used now
 #define TICKS_PER_STEP 24   // one step is broken into {TICKS_PER_STEP} ticks
-// note: TICKS_PER_STEP over 24 makes little sense since tick() need to be
-// called more frequently than 1kHz to achieve such precision
+// note: TICKS_PER_STEP over 24 (96 ppq) makes little sense since tick() need to
+// be called more frequently than 1kHz to achieve such precision
 
 namespace Sequencer {
 
@@ -34,7 +35,7 @@ public:
     Brownian
   };  // unused now
 
-  Track(int channel = 1,
+  Track(int channel,
         int length = STEP_SEQ_DEFAULT_LENGTH,
         PlayMode mode = PlayMode::Forward)
       : channel_(channel),
@@ -74,8 +75,12 @@ public:
   // etc.)
 
 protected:
+  void renderNote(int index, Note note);
+
   // timestamp in ticks (not seconds or samples)
   void renderMidiMessage(juce::MidiMessage message);
+
+  static constexpr int HALF_STEP_TICKS = TICKS_PER_STEP / 2;
 
 private:
   int channel_;
@@ -90,20 +95,21 @@ private:
 
   bool enabled_;
 
-  // functiona related variables
+  // function related variables
   int tick_;
-
-  static constexpr int HALF_STEP_TCIKS = TICKS_PER_STEP / 2;
 
   // derived class must implement renderStep and getStepNoteRenderTick
   virtual void renderStep(int index) = 0;
   virtual int getStepRenderTick(int index) const = 0;
 
-  // double MIDI buffer inspired by the endless scrolling
-  // background technique in early arcade games
-  // invariant: MIDI messages are always sorted by timestamp
-  // note: when porting to Spark/Prologue, change from juce::MidiMessageSequence
-  // to a more performant data structure
+  /*
+    double MIDI buffer inspired by the endless scrolling background technique in
+    early arcade games
+    invariant: MIDI messages are always sorted by timestamp
+    note: when porting to Spark/Prologue, change from juce::MidiMessageSequence
+    to a more performant data structure
+  */
+
   juce::MidiMessageSequence firstRun_;
   juce::MidiMessageSequence secondRun_;
 };

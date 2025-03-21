@@ -32,7 +32,8 @@ struct PolyStep {
   Note notes[POLYPHONY];
 
   // note: no retrigger for now
-  // maybe interesting to have a arp generator inside polystep
+  // think about what is the equivalent of roll for poly steps
+  // maybe interesting to have a arp/strum generator inside polystep
 
   float probability = 1.f;
   int alternate = 1;  // I think only one of these will remain in poly step
