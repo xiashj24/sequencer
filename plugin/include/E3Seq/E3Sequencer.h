@@ -73,19 +73,19 @@ public:
   void handleNoteOn(juce::MidiMessage noteOn);
   void handleNoteOff(juce::MidiMessage noteOff);
 
-  Track& getTrack(int channel) {
-    if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
-      return getMonoTrack(channel);
+  Track& getTrack(int index) {
+    if (index < STEP_SEQ_NUM_MONO_TRACKS) {
+      return getMonoTrack(index);
     } else {
-      return getPolyTrack(channel);
+      return getPolyTrack(index);
     }
   }
 
   // sequencer programming interface
-  MonoTrack& getMonoTrack(int channel) { return monoTracks_[channel - 1]; }
+  MonoTrack& getMonoTrack(int index) { return monoTracks_[index]; }
 
-  PolyTrack& getPolyTrack(int channel) {
-    return polyTracks_[channel - 1 - STEP_SEQ_NUM_POLY_TRACKS];
+  PolyTrack& getPolyTrack(int index) {
+    return polyTracks_[index - STEP_SEQ_NUM_MONO_TRACKS];
   }
 
   // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
@@ -99,7 +99,8 @@ public:
   // tick-based timekeeping for MIDI clock sync
   // void tick(juce::MidiMessageCollector& collector);
 private:
-  // seqencer parameters here
+  MonoTrack monoTracks_[STEP_SEQ_NUM_MONO_TRACKS];
+  PolyTrack polyTracks_[STEP_SEQ_NUM_POLY_TRACKS];
   double bpm_;
   // TODO: alternative time signatures
   double getOneTickTime() const { return 15.0 / bpm_ / TICKS_PER_STEP; }
@@ -116,8 +117,6 @@ private:
 
   std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
-  MonoTrack monoTracks_[STEP_SEQ_NUM_MONO_TRACKS];
-  PolyTrack polyTracks_[STEP_SEQ_NUM_POLY_TRACKS];
 };
 
 }  // namespace Sequencer

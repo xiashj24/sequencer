@@ -9,7 +9,9 @@
 namespace Sequencer {
 
 E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
-    : bpm_(bpm),
+    : monoTracks_{1, 2, 3, 4, 5, 6, 7, 8},
+      polyTracks_{9, 10, 11, 12},  // will this work?
+      bpm_(bpm),
       running_(false),
       armed_(false),
       quantizeRec_(false),
@@ -17,9 +19,8 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       startTime_(0.0),
       midiCollector_(midiCollector) {
   // MARK: track config
-  for (int channel = 0; channel <= STEP_SEQ_NUM_TRACKS; ++channel) {
-    Track& track = getTrack(channel);
-    track.setChannel(channel);
+  for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
+    Track& track = getTrack(index);
     track.sendMidiMessage = [this](juce::MidiMessage msg) {
       // time translation
       int tick = (int)msg.getTimeStamp();
@@ -31,20 +32,17 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
   }
 }
 
+// note: for time precision, deltaTime should be much smaller than OneTickTime
 void E3Sequencer::process(double deltaTime) {
   if (!running_)
     return;
-
-#ifdef JUCE_DEBUG
-  jassert(deltaTime < getOneTickTime());
-#endif
 
   timeSinceStart_ += deltaTime;
   double one_tick_time = getOneTickTime();
 
   if (timeSinceStart_ >= one_tick_time) {
-    for (int channel = 1; channel <= STEP_SEQ_NUM_TRACKS; ++channel) {
-      getTrack(channel).tick();
+    for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
+      getTrack(index).tick();
     }
     timeSinceStart_ -= one_tick_time;
   }
@@ -56,8 +54,8 @@ void E3Sequencer::start(double startTime) {
   running_ = true;
   timeSinceStart_ = 0.0;
   startTime_ = startTime;
-  for (int channel = 1; channel <= STEP_SEQ_NUM_TRACKS; ++channel) {
-    getTrack(channel).returnToStart();
+  for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
+    getTrack(index).returnToStart();
   }
 }
 
@@ -70,49 +68,50 @@ void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
 
   if (this->isArmed() && this->isRunning()) {
     int channel = noteOn.getChannel();
-    int step_index = getTrack(channel - 1).getCurrentStepIndex();
-    lastNoteOn_[step_index].emplace(noteOn);
+    int step_index = getTrack(channel).getCurrentStepIndex();
+    lastNoteOn_[step_index].emplace(
+        noteOn);  // this would not work for poly track, need to change the data
+                  // structure for the buffer
   }
 }
 
 void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
+  // ignore MIDI messages for channels > 8, will remove later
+  if (noteOff.getChannel() > 8)
+    return;
+
   // find corresponding note on
   int note_number = noteOff.getNoteNumber();
   int channel = noteOff.getChannel();
 
-  if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
-    for (int index = 0; index < STEP_SEQ_MAX_LENGTH; ++index) {
-      if (lastNoteOn_[index].has_value()) {
-        auto noteOn = lastNoteOn_[index].value();
-        if (noteOn.getNoteNumber() == note_number &&
-            noteOn.getChannel() == channel) {
-          // calculate offset and length
+  for (int index = 0; index < STEP_SEQ_MAX_LENGTH; ++index) {
+    if (lastNoteOn_[index].has_value()) {
+      auto noteOn = lastNoteOn_[index].value();
+      if (noteOn.getNoteNumber() == note_number &&
+          noteOn.getChannel() == channel) {
+        // calculate offset and length
 
-          double offset = 0.0;
-          if (!quantizeRec_) {
-            offset = (noteOn.getTimeStamp() - startTime_) / getOneStepTime();
-            offset -= std::round(offset);  // wrap in [-0.5, 0.5)
-          }
-
-          auto length = (noteOff.getTimeStamp() - noteOn.getTimeStamp()) /
-                        getOneStepTime();
-          length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
-
-          MonoStep step{.enabled = true,
-                        .note.number = note_number,
-                        .note.velocity = noteOn.getVelocity(),
-                        .note.offset = static_cast<float>(offset),
-                        .note.length = static_cast<float>(length)};
-          getMonoTrack(channel - 1).setStepAtIndex(index, step);
-          // notify AudioProcessor about parameter change
-          notifyProcessor(channel - 1, index, step);
-          lastNoteOn_[index].reset();
+        double offset = 0.0;
+        if (!quantizeRec_) {
+          offset = (noteOn.getTimeStamp() - startTime_) / getOneStepTime();
+          offset -= std::round(offset);  // wrap in [-0.5, 0.5)
         }
+
+        auto length =
+            (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();
+        length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
+
+        MonoStep step{.enabled = true,
+                      .note.number = note_number,
+                      .note.velocity = noteOn.getVelocity(),
+                      .note.offset = static_cast<float>(offset),
+                      .note.length = static_cast<float>(length)};
+        getMonoTrack(channel - 1).setStepAtIndex(index, step);
+        // notify AudioProcessor about parameter change
+        notifyProcessor(channel - 1, index, step);
+        lastNoteOn_[index].reset();
       }
     }
-    // } else {
-    //   // TODO: handle live rec for poly tracks
-    // }
   }
 }
 }  // namespace Sequencer

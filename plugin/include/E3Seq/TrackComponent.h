@@ -14,11 +14,11 @@ namespace audio_plugin {
 class TrackComponent : public juce::Component, private juce::Timer {
 public:
   TrackComponent(AudioPluginAudioProcessor& p,
-                 int trackNumber,
+                 int trackIndex,
                  juce::Colour trackColor)
       : processorRef(p),
-        trackRef(p.sequencer.getMonoTrack(trackNumber)),
-        trackNumber_(trackNumber) {
+        trackRef(p.sequencer.getTrack(trackIndex)),
+        trackIndex_(trackIndex) {
     startTimer(10);
 
     setCollapsed(true);
@@ -132,7 +132,7 @@ public:
     // attach buttons and sliders to processor parameters
     for (int i = 0; i < STEP_SEQ_DEFAULT_LENGTH; ++i) {
       juce::String prefix =
-          "T" + juce::String(trackNumber_) + "_S" + juce::String(i) + "_";
+          "T" + juce::String(trackIndex_) + "_S" + juce::String(i) + "_";
 
       enableAttachments[i] = std::make_unique<ButtonAttachment>(
           processorRef.parameters, prefix + "ENABLED", stepButtons[i]);
@@ -218,7 +218,7 @@ public:
 private:
   AudioPluginAudioProcessor& processorRef;
   Sequencer::Track& trackRef;
-  int trackNumber_;
+  int trackIndex_;
   bool collapsed_;
 
   void setCollapsed(bool collapsed) {
@@ -228,13 +228,13 @@ private:
                   STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
               STEP_BUTTON_HEIGHT);
       trackCollapseButton.setButtonText("Track " +
-                                        juce::String(trackNumber_ + 1) + " ▶");
+                                        juce::String(trackIndex_) + " ▶");
     } else {
       setSize(STEP_BUTTON_WIDTH * (STEP_SEQ_DEFAULT_LENGTH + 1) +
                   STEP_BUTTON_SPACING * STEP_SEQ_DEFAULT_LENGTH,
               STEP_BUTTON_HEIGHT + KNOB_HEIGHT * 7);
       trackCollapseButton.setButtonText("Track " +
-                                        juce::String(trackNumber_ + 1) + " ▼");
+                                        juce::String(trackIndex_) + " ▼");
     }
   }
 

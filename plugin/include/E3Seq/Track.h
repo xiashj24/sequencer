@@ -47,6 +47,8 @@ public:
   ~Track() = default;
 
   void setEnabled(bool enabled) { enabled_ = enabled; }
+
+  // what's the use of this method. for runtime channel swithing?
   void setChannel(int channel) { channel_ = channel; }
   /*
     early worrying note:

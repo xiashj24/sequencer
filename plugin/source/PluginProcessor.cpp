@@ -101,7 +101,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameterLayout() {
   using namespace juce;
   AudioProcessorValueTreeState::ParameterLayout layout;
-  for (int track = 0; track < STEP_SEQ_NUM_TRACKS; ++track) {
+  for (int track = 0; track < STEP_SEQ_NUM_MONO_TRACKS; ++track) {
     for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
       String prefix = "T" + String(track) + "_S" + String(step) + "_";
       // MARK: parameter layout
@@ -165,7 +165,7 @@ void AudioPluginAudioProcessor::hiResTimerCallback() {
   constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
 
   // TODO: support poly tracks
-  for (int i = 0; i < STEP_SEQ_NUM_TRACKS; ++i) {
+  for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
     for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
       Sequencer::MonoStep step{
           .enabled = static_cast<bool>(*(enabled_pointers[i][j])),

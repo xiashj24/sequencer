@@ -12,13 +12,13 @@ public:
   explicit AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor&);
   ~AudioPluginAudioProcessorEditor() override;
 
-  void paint(juce::Graphics& g) override {
-    juce::ColourGradient gradient(juce::Colours::black, 0, 0,
-                                  juce::Colours::darkgrey, getWidth(),
-                                  getHeight(), false);
-    g.setGradientFill(gradient);
-    g.fillAll();
-  }
+  // void paint(juce::Graphics& g) override {
+  //   juce::ColourGradient gradient(juce::Colours::black, 0, 0,
+  //                                 juce::Colours::darkgrey, getWidth(),
+  //                                 getHeight(), false);
+  //   g.setGradientFill(gradient);
+  //   g.fillAll();
+  // }
   void resized() override;
 
   bool keyPressed(const juce::KeyPress& key) override {

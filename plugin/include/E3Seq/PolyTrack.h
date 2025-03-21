@@ -7,7 +7,7 @@
 namespace Sequencer {
 class PolyTrack : public Track {
 public:
-  PolyTrack(int channel = 1, int length = STEP_SEQ_DEFAULT_LENGTH)
+  PolyTrack(int channel, int length = STEP_SEQ_DEFAULT_LENGTH)
       : Track(channel, length) {}
 
   // note: there is some code duplication but I can't think of a better way

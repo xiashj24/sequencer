@@ -10,7 +10,7 @@
 namespace Sequencer {
 class MonoTrack : public Track {
 public:
-  MonoTrack(int channel = 1,
+  MonoTrack(int channel,
             int length = STEP_SEQ_DEFAULT_LENGTH,
             PlayMode mode = PlayMode::Forward)
       : Track(channel, length, mode) {}
