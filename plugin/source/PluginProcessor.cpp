@@ -285,10 +285,10 @@ void AudioPluginAudioProcessor::hiResTimerCallback() {
     for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
       Sequencer::MonoStep step{
           .enabled = static_cast<bool>(*(mono_enabled_pointers[i][j])),
-          .note.number = static_cast<int>(*(mono_note_pointers[i][j])),
-          .note.velocity = static_cast<int>(*(mono_velocity_pointers[i][j])),
-          .note.offset = *(mono_offset_pointers[i][j]),
-          .note.length = *(mono_length_pointers[i][j]),
+          {.number = static_cast<int>(*(mono_note_pointers[i][j])),
+                .velocity = static_cast<int>(*(mono_velocity_pointers[i][j])),
+                .offset = *(mono_offset_pointers[i][j]),
+                .length = *(mono_length_pointers[i][j])},
           .retrigger_rate = *(mono_retrigger_pointers[i][j]),
           .probability = *(mono_probability_pointers[i][j]),
           .alternate = static_cast<int>(*(mono_alternate_pointers[i][j])),
