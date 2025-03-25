@@ -13,15 +13,9 @@ public:
   // note: there is some code duplication but I can't think of a better way
   PolyStep getStepAtIndex(int index) const { return steps_[index]; }
 
-  void setStepAtIndex(int index,
-                      PolyStep step,
-                      bool ignore_alternate_count = false) {
-    if (ignore_alternate_count) {
-      step.count = steps_[index].count;
-    }
-
-    steps_[index] = step;
-  }
+  // side note: for embedded, it makes sense to begin a new transaction of undo
+  // manager whenever stepStepAtIndex is called
+  void setStepAtIndex(int index, PolyStep step) { steps_[index] = step; }
 
 private:
   PolyStep steps_[STEP_SEQ_MAX_LENGTH];
@@ -35,24 +29,11 @@ private:
   void renderStep(int index) override final {
     auto& step = steps_[index];
     if (step.enabled) {
-      // alternate check
-      if ((step.count++) % step.alternate != 0) {
-        return;
-      }
-
       // probability check
       if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {
         return;
       }
-
       // render all notes in the step
-
-      // test: what happens when notes[Polypnony] all share the same note
-      // number? for poly synth, we could allow this to achieve a unison
-      // effect?
-      // should probably not allow that, because it will fuckup early note off
-      // processing
-
       for (int j = 0; j < POLYPHONY; ++j) {
         // render note
         renderNote(index, steps_[index].notes[j]);

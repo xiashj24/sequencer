@@ -10,6 +10,9 @@ int Track::getCurrentStepIndex() const {
 }
 
 void Track::renderNote(int index, Note note) {
+  if (note.number <= 20)
+    return;
+
   int note_on_tick = static_cast<int>((index + note.offset) * TICKS_PER_STEP);
   int note_off_tick =
       static_cast<int>((index + note.offset + note.length) * TICKS_PER_STEP);

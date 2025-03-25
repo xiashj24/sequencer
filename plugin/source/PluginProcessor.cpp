@@ -28,63 +28,118 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
   }
 #endif
   // store parameter pointers which can be safely accessed in timer thread
-  for (int track = 0; track < STEP_SEQ_NUM_TRACKS; ++track) {
+  for (int track = 0; track < STEP_SEQ_NUM_MONO_TRACKS; ++track) {
     for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
       juce::String prefix =
           "T" + juce::String(track) + "_S" + juce::String(step) + "_";
-      enabled_pointers[track][step] =
+      mono_enabled_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "ENABLED");
-      note_pointers[track][step] =
+      mono_note_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "NOTE");
-      velocity_pointers[track][step] =
+      mono_velocity_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "VELOCITY");
-      offset_pointers[track][step] =
+      mono_offset_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "OFFSET");
-      length_pointers[track][step] =
+      mono_length_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "LENGTH");
-      retrigger_pointers[track][step] =
+      mono_retrigger_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "RETRIGGER");
-      probability_pointers[track][step] =
+      mono_probability_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "PROBABILITY");
-      alternate_pointers[track][step] =
+      mono_alternate_pointers[track][step] =
           parameters.getRawParameterValue(prefix + "ALTERNATE");
     }
   }
+  for (int track = 0; track < STEP_SEQ_NUM_POLY_TRACKS; ++track) {
+    for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
+      juce::String prefix = "T" +
+                            juce::String(track + STEP_SEQ_NUM_MONO_TRACKS) +
+                            "_S" + juce::String(step) + "_";
+      poly_enabled_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "ENABLED");
+      poly_probability_pointers[track][step] =
+          parameters.getRawParameterValue(prefix + "PROBABILITY");
 
-  sequencer.notifyProcessor = [this](int track_index, int step_index,
-                                     Sequencer::MonoStep step) {
+      for (int note = 0; note < POLYPHONY; ++note) {
+        juce::String note_signifier = "N" + juce::String(note) + "_";
 
-    undoManager.beginNewTransaction("Live recording note");
+        poly_note_pointers[track][step][note] =
+            parameters.getRawParameterValue(prefix + note_signifier + "NOTE");
+        poly_velocity_pointers[track][step][note] =
+            parameters.getRawParameterValue(prefix + note_signifier +
+                                            "VELOCITY");
+        poly_offset_pointers[track][step][note] =
+            parameters.getRawParameterValue(prefix + note_signifier + "OFFSET");
+        poly_length_pointers[track][step][note] =
+            parameters.getRawParameterValue(prefix + note_signifier + "LENGTH");
+      }
+    }
+  }
 
-    juce::String prefix =
-        "T" + juce::String(track_index) + "_S" + juce::String(step_index) + "_";
-    parameters.getParameter(prefix + "ENABLED")
-        ->setValueNotifyingHost(static_cast<float>(step.enabled));
+  sequencer.notifyProcessorMonoStepUpdate =
+      [this](int track_index, int step_index, Sequencer::MonoStep step) {
+        undoManager.beginNewTransaction("Live recording note");
 
-    auto p = parameters.getParameter(prefix + "NOTE");
-    p->setValueNotifyingHost(
-        p->convertTo0to1(static_cast<float>(step.note.number)));
+        juce::String prefix = "T" + juce::String(track_index) + "_S" +
+                              juce::String(step_index) + "_";
+        auto p = parameters.getParameter(prefix + "ENABLED");
+        p->setValueNotifyingHost(static_cast<float>(step.enabled));
 
-    p = parameters.getParameter(prefix + "VELOCITY");
-    p->setValueNotifyingHost(
-        p->convertTo0to1(static_cast<float>(step.note.velocity)));
+        p = parameters.getParameter(prefix + "NOTE");
+        p->setValueNotifyingHost(
+            p->convertTo0to1(static_cast<float>(step.note.number)));
 
-    p = parameters.getParameter(prefix + "OFFSET");
-    p->setValueNotifyingHost(p->convertTo0to1(step.note.offset));
+        p = parameters.getParameter(prefix + "VELOCITY");
+        p->setValueNotifyingHost(
+            p->convertTo0to1(static_cast<float>(step.note.velocity)));
 
-    p = parameters.getParameter(prefix + "LENGTH");
-    p->setValueNotifyingHost(p->convertTo0to1(step.note.length));
+        p = parameters.getParameter(prefix + "OFFSET");
+        p->setValueNotifyingHost(p->convertTo0to1(step.note.offset));
 
-    p = parameters.getParameter(prefix + "RETRIGGER");
-    p->setValueNotifyingHost(p->convertTo0to1(step.retrigger_rate));
+        p = parameters.getParameter(prefix + "LENGTH");
+        p->setValueNotifyingHost(p->convertTo0to1(step.note.length));
 
-    p = parameters.getParameter(prefix + "PROBABILITY");
-    p->setValueNotifyingHost(p->convertTo0to1(step.probability));
+        p = parameters.getParameter(prefix + "RETRIGGER");
+        p->setValueNotifyingHost(p->convertTo0to1(step.retrigger_rate));
 
-    p = parameters.getParameter(prefix + "ALTERNATE");
-    p->setValueNotifyingHost(
-        p->convertTo0to1(static_cast<float>(step.alternate)));
-  };
+        p = parameters.getParameter(prefix + "PROBABILITY");
+        p->setValueNotifyingHost(p->convertTo0to1(step.probability));
+
+        p = parameters.getParameter(prefix + "ALTERNATE");
+        p->setValueNotifyingHost(
+            p->convertTo0to1(static_cast<float>(step.alternate)));
+      };
+
+  sequencer.notifyProcessorPolyStepUpdate =
+      [this](int track_index, int step_index, Sequencer::PolyStep step) {
+        undoManager.beginNewTransaction("Live recording note");
+
+        juce::String prefix =
+            "T" + juce::String(track_index + STEP_SEQ_NUM_MONO_TRACKS) + "_S" +
+            juce::String(step_index) + "_";
+        auto p = parameters.getParameter(prefix + "ENABLED");
+        p->setValueNotifyingHost(static_cast<float>(step.enabled));
+
+        p = parameters.getParameter(prefix + "PROBABILITY");
+        p->setValueNotifyingHost(p->convertTo0to1(step.probability));
+
+        for (int i = 0; i < POLYPHONY; ++i) {
+          auto note_signifier = "N" + juce::String(i) + "_";
+          p = parameters.getParameter(prefix + note_signifier + "NOTE");
+          p->setValueNotifyingHost(
+              p->convertTo0to1(static_cast<float>(step.notes[i].number)));
+
+          p = parameters.getParameter(prefix + note_signifier + "VELOCITY");
+          p->setValueNotifyingHost(
+              p->convertTo0to1(static_cast<float>(step.notes[i].velocity)));
+
+          p = parameters.getParameter(prefix + note_signifier + "OFFSET");
+          p->setValueNotifyingHost(p->convertTo0to1(step.notes[i].offset));
+
+          p = parameters.getParameter(prefix + note_signifier + "LENGTH");
+          p->setValueNotifyingHost(p->convertTo0to1(step.notes[i].length));
+        }
+      };
   startTimer(TIMER_INTERVAL_MS);
 }
 
@@ -101,32 +156,49 @@ juce::AudioProcessorValueTreeState::ParameterLayout
 AudioPluginAudioProcessor::createParameterLayout() {
   using namespace juce;
   AudioProcessorValueTreeState::ParameterLayout layout;
+
+  auto note_attributes =
+      juce::AudioParameterIntAttributes{}.withStringFromValueFunction(
+          [](int value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            if (value <= DISABLED_NOTE) {
+              return juce::String("Off");
+            } else {
+              return juce::MidiMessage::getMidiNoteName(value, true, true, 4);
+            }
+          });
+
+  auto offset_attributes =
+      juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
+          [](float value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            int index = static_cast<int>(value * 24) + 12;
+            return OffsetText[index];
+          });
+
+  auto retrigger_attributes =
+      juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
+          [](float value, int maximumStringLength) {
+            juce::ignoreUnused(maximumStringLength);
+            int index = static_cast<int>(value * 12);
+            return RetriggerText[index];
+          });
+
+  // MARK: parameter layout
+
+  // mono tracks
   for (int track = 0; track < STEP_SEQ_NUM_MONO_TRACKS; ++track) {
     for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
       String prefix = "T" + String(track) + "_S" + String(step) + "_";
-      // MARK: parameter layout
       layout.add(std::make_unique<AudioParameterBool>(prefix + "ENABLED",
                                                       "Enabled", false));
 
-      auto note_attributes =
-          juce::AudioParameterIntAttributes{}.withStringFromValueFunction(
-              [](int value, int maximumStringLength) {
-                juce::ignoreUnused(maximumStringLength);
-                return juce::MidiMessage::getMidiNoteName(value, true, true, 4);
-              });
       layout.add(std::make_unique<AudioParameterInt>(
           prefix + "NOTE", "Note", 21, 127, DEFAULT_NOTE, note_attributes));
 
       layout.add(std::make_unique<AudioParameterInt>(
           prefix + "VELOCITY", "Velocity", 1, 127, DEFAULT_VELOCITY));
 
-      auto offset_attributes =
-          juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
-              [](float value, int maximumStringLength) {
-                juce::ignoreUnused(maximumStringLength);
-                int index = static_cast<int>(value * 24) + 12;
-                return OffsetText[index];
-              });
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "OFFSET", "Offset",
           NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f,
@@ -137,13 +209,6 @@ AudioPluginAudioProcessor::createParameterLayout() {
           NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
           static_cast<float>(DEFAULT_LENGTH)));
 
-      auto retrigger_attributes =
-          juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(
-              [](float value, int maximumStringLength) {
-                juce::ignoreUnused(maximumStringLength);
-                int index = static_cast<int>(value * 12);
-                return RetriggerText[index];
-              });
       layout.add(std::make_unique<AudioParameterFloat>(
           prefix + "RETRIGGER", "Retrigger Rate",
           NormalisableRange<float>(0.f, 1.5f, 1.f / 12.f), 0.f,
@@ -157,29 +222,98 @@ AudioPluginAudioProcessor::createParameterLayout() {
                                                      "Alternate", 1, 4, 1));
     }
   }
+
+  // poly tracks
+  for (int track = STEP_SEQ_NUM_MONO_TRACKS; track < STEP_SEQ_NUM_TRACKS;
+       ++track) {
+    for (int step = 0; step < STEP_SEQ_MAX_LENGTH; ++step) {
+      String prefix = "T" + String(track) + "_S" + String(step) + "_";
+      layout.add(std::make_unique<AudioParameterBool>(prefix + "ENABLED",
+                                                      "Enabled", false));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "PROBABILITY", "Probability",
+          NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f));
+
+      layout.add(std::make_unique<AudioParameterInt>(
+          prefix + "N0_NOTE", "Note", 20, 127, DEFAULT_NOTE, note_attributes));
+
+      layout.add(std::make_unique<AudioParameterInt>(
+          prefix + "N0_VELOCITY", "Velocity", 1, 127, DEFAULT_VELOCITY));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "N0_OFFSET", "Offset",
+          NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f,
+          offset_attributes));
+
+      layout.add(std::make_unique<AudioParameterFloat>(
+          prefix + "N0_LENGTH", "Length",
+          NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
+          static_cast<float>(DEFAULT_LENGTH)));
+
+      for (int note = 1; note < POLYPHONY; ++note) {
+        String note_signifier = "N" + String(note) + "_";
+        layout.add(std::make_unique<AudioParameterInt>(
+            prefix + note_signifier + "NOTE", "Note", 20, 127, DISABLED_NOTE,
+            note_attributes));
+
+        layout.add(std::make_unique<AudioParameterInt>(
+            prefix + note_signifier + "VELOCITY", "Velocity", 1, 127,
+            DEFAULT_VELOCITY));
+
+        layout.add(std::make_unique<AudioParameterFloat>(
+            prefix + note_signifier + "OFFSET", "Offset",
+            NormalisableRange<float>(-0.5f, 0.49f, 0.01f), 0.0f,
+            offset_attributes));
+
+        layout.add(std::make_unique<AudioParameterFloat>(
+            prefix + note_signifier + "LENGTH", "Length",
+            NormalisableRange<float>(0.08f, STEP_SEQ_MAX_LENGTH, 0.01f, 0.5f),
+            static_cast<float>(DEFAULT_LENGTH)));
+      }
+    }
+  }
   return layout;
 }
 
 void AudioPluginAudioProcessor::hiResTimerCallback() {
-  // ..sequencer logic here..
+  // MARK: seq logic
   constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
 
-  // TODO: support poly tracks
+  // retrieve sequencer parameters from APVTS
   for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
     for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
       Sequencer::MonoStep step{
-          .enabled = static_cast<bool>(*(enabled_pointers[i][j])),
-          .note.number = static_cast<int>(*(note_pointers[i][j])),
-          .note.velocity = static_cast<int>(*(velocity_pointers[i][j])),
-          .note.offset = *(offset_pointers[i][j]),
-          .note.length = *(length_pointers[i][j]),
-          .retrigger_rate = *(retrigger_pointers[i][j]),
-          .probability = *(probability_pointers[i][j]),
-          .alternate = static_cast<int>(*(alternate_pointers[i][j])),
+          .enabled = static_cast<bool>(*(mono_enabled_pointers[i][j])),
+          .note.number = static_cast<int>(*(mono_note_pointers[i][j])),
+          .note.velocity = static_cast<int>(*(mono_velocity_pointers[i][j])),
+          .note.offset = *(mono_offset_pointers[i][j]),
+          .note.length = *(mono_length_pointers[i][j]),
+          .retrigger_rate = *(mono_retrigger_pointers[i][j]),
+          .probability = *(mono_probability_pointers[i][j]),
+          .alternate = static_cast<int>(*(mono_alternate_pointers[i][j])),
       };
       sequencer.getMonoTrack(i).setStepAtIndex(j, step, true);
     }
   }
+
+  for (int i = 0; i < STEP_SEQ_NUM_POLY_TRACKS; ++i) {
+    for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
+      Sequencer::PolyStep step = sequencer.getPolyTrack(i).getStepAtIndex(j);
+      step.enabled = static_cast<bool>(*(poly_enabled_pointers[i][j]));
+      step.probability = *(poly_probability_pointers[i][j]);
+
+      for (int n = 0; n < POLYPHONY; ++n) {
+        step.notes[n].number = static_cast<int>(*(poly_note_pointers[i][j][n]));
+        step.notes[n].velocity =
+            static_cast<int>(*(poly_velocity_pointers[i][j][n]));
+        step.notes[n].offset = *(poly_offset_pointers[i][j][n]);
+        step.notes[n].length = *(poly_length_pointers[i][j][n]);
+      }
+      sequencer.getPolyTrack(i).setStepAtIndex(j, step);
+    }
+  }
+
   sequencer.process(deltaTime);
 }
 

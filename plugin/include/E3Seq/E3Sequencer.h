@@ -77,24 +77,23 @@ public:
     if (index < STEP_SEQ_NUM_MONO_TRACKS) {
       return getMonoTrack(index);
     } else {
-      return getPolyTrack(index);
+      return getPolyTrack(index - STEP_SEQ_NUM_MONO_TRACKS);
     }
   }
 
   // sequencer programming interface
   MonoTrack& getMonoTrack(int index) { return monoTracks_[index]; }
 
-  PolyTrack& getPolyTrack(int index) {
-    return polyTracks_[index - STEP_SEQ_NUM_MONO_TRACKS];
-  }
+  PolyTrack& getPolyTrack(int index) { return polyTracks_[index]; }
 
   // deltaTime is in seconds, call this frequenctly, preferably over 1kHz
   void process(double deltaTime);
 
-  // TODO: use pure virtual function as opposed to callback approach
-  // PluginProcessor should register a callback to update APVTS
   std::function<void(int track_index, int step_index, MonoStep step)>
-      notifyProcessor;
+      notifyProcessorMonoStepUpdate;
+
+  std::function<void(int track_index, int step_index, PolyStep step)>
+      notifyProcessorPolyStepUpdate;
 
   // tick-based timekeeping for MIDI clock sync
   // void tick(juce::MidiMessageCollector& collector);
@@ -115,7 +114,16 @@ private:
   double timeSinceStart_;
   double startTime_;
 
-  std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
+  // timestamp in (fractional) steps
+  Note calculateNoteFromNoteOnAndOff(juce::MidiMessage noteOn,
+                                     juce::MidiMessage noteOff);
+
+  std::pair<juce::MidiMessage,
+            int>
+      lastNoteOn_[128];  // (noteOn, step_index), where
+                         // step_index == -1 indicate no message
+
+  // std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
 };
 

@@ -6,7 +6,7 @@
 #include "E3Seq/E3Sequencer.h"
 
 namespace audio_plugin {
-class AudioPluginAudioProcessor : public juce::AudioProcessor,
+class AudioPluginAudioProcessor : public juce::AudioProcessor, 
                                   private juce::HighResolutionTimer {
 public:
   AudioPluginAudioProcessor();
@@ -60,19 +60,37 @@ public:
 private:
   juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-  std::atomic<float>* enabled_pointers[STEP_SEQ_NUM_TRACKS]
-                                      [STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* note_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* velocity_pointers[STEP_SEQ_NUM_TRACKS]
-                                       [STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* offset_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* length_pointers[STEP_SEQ_NUM_TRACKS][STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* retrigger_pointers[STEP_SEQ_NUM_TRACKS]
+  std::atomic<float>* mono_enabled_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                           [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* mono_probability_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                               [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* mono_note_pointers[STEP_SEQ_NUM_MONO_TRACKS]
                                         [STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* probability_pointers[STEP_SEQ_NUM_TRACKS]
+  std::atomic<float>* mono_velocity_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                            [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* mono_offset_pointers[STEP_SEQ_NUM_MONO_TRACKS]
                                           [STEP_SEQ_MAX_LENGTH];
-  std::atomic<float>* alternate_pointers[STEP_SEQ_NUM_TRACKS]
-                                        [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* mono_length_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                          [STEP_SEQ_MAX_LENGTH];
+
+  std::atomic<float>* mono_retrigger_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                             [STEP_SEQ_MAX_LENGTH];
+
+  std::atomic<float>* mono_alternate_pointers[STEP_SEQ_NUM_MONO_TRACKS]
+                                             [STEP_SEQ_MAX_LENGTH];
+
+  std::atomic<float>* poly_enabled_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                           [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* poly_probability_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                               [STEP_SEQ_MAX_LENGTH];
+  std::atomic<float>* poly_note_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                        [STEP_SEQ_MAX_LENGTH][POLYPHONY];
+  std::atomic<float>* poly_velocity_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                            [STEP_SEQ_MAX_LENGTH][POLYPHONY];
+  std::atomic<float>* poly_offset_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                          [STEP_SEQ_MAX_LENGTH][POLYPHONY];
+  std::atomic<float>* poly_length_pointers[STEP_SEQ_NUM_POLY_TRACKS]
+                                          [STEP_SEQ_MAX_LENGTH][POLYPHONY];
 
   juce::MidiMessageCollector guiMidiCollector;
   juce::MidiMessageCollector seqMidiCollector;

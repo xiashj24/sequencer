@@ -15,8 +15,7 @@ public:
             PlayMode mode = PlayMode::Forward)
       : Track(channel, length, mode) {}
 
-  MonoStep getStepAtIndex(int index) const { return steps_[index]; }
-
+  // sequencer programmer interface
   void setStepAtIndex(int index,
                       MonoStep step,
                       bool ignore_alternate_count = false) {
@@ -26,6 +25,8 @@ public:
 
     steps_[index] = step;
   }
+
+  MonoStep getStepAtIndex(int index) const { return steps_[index]; }
 
 private:
   MonoStep steps_[STEP_SEQ_MAX_LENGTH];
