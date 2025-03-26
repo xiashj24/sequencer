@@ -21,9 +21,11 @@ private:
   PolyStep steps_[STEP_SEQ_MAX_LENGTH];
 
   int getStepRenderTick(int index) const override final {
-    // render at the start of the step time window
-    // TODO: also try render at the ealiest note on tick
-    return index * TICKS_PER_STEP - HALF_STEP_TICKS;
+    float offset_min = 0.0f;
+    for (int i = 0; i < POLYPHONY; ++i) {
+      offset_min = std::min(offset_min, steps_[index].notes[i].offset);
+    }
+    return static_cast<int>((index + offset_min) * TICKS_PER_STEP);
   }
 
   void renderStep(int index) override final {

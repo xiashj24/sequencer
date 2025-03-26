@@ -9,34 +9,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
       sequencerEditor(p),
       onScreenKeyboard(p.keyboardState,
                        juce::MidiKeyboardComponent::horizontalKeyboard) {
-  bpmLabel.setText("BPM: ", juce::NotificationType::dontSendNotification);
-  bpmLabel.attachToComponent(&bpmSlider, true);
-  bpmSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
-  bpmSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false, 40,
-                            STEP_BUTTON_HEIGHT);
-  bpmSlider.setRange(BPM_MIN, BPM_MAX, 1);
-  bpmSlider.setValue(BPM_DEFAULT);
-  bpmSlider.setDoubleClickReturnValue(true, BPM_DEFAULT);
-  bpmSlider.onValueChange = [this] {
-    processorRef.sequencer.setBpm(bpmSlider.getValue());
-  };
-  addAndMakeVisible(bpmSlider);
-
-  keyboardMidiChannelLabel.setText(
-      "Keyboard trigger MIDI channel: ",
-      juce::NotificationType::dontSendNotification);
-  keyboardMidiChannelLabel.attachToComponent(&keyboardMidiChannelSlider, true);
-  keyboardMidiChannelSlider.setSliderStyle(
-      juce::Slider::SliderStyle::IncDecButtons);
-  keyboardMidiChannelSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false,
-                                            30, STEP_BUTTON_HEIGHT);
-  keyboardMidiChannelSlider.setRange(1, 16, 1);
-  keyboardMidiChannelSlider.setValue(1);
-  keyboardMidiChannelSlider.onValueChange = [this] {
-    onScreenKeyboard.setMidiChannel((int)keyboardMidiChannelSlider.getValue());
-  };
-  addAndMakeVisible(keyboardMidiChannelSlider);
-
   panicButton.setButtonText("Panic!");
   panicButton.setTooltip("force all notes off");
   panicButton.onClick = [this] { processorRef.panic(); };
@@ -46,6 +18,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   helpButton.setTooltip("tips and shortcuts");
   helpButton.onClick = [this] { showHelpPopup(); };
   addAndMakeVisible(helpButton);
+
+  recordButton.setButtonText(juce::String::fromUTF8("⏺Rec"));
+  recordButton.setClickingTogglesState(true);
+  recordButton.addShortcut(juce::KeyPress('r'));
+  recordButton.setTooltip("toggle real-time recording (r)");
+  recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
+                         juce::Colours::orangered);
+  recordButton.onClick = [this] {
+    processorRef.sequencer.setArmed(recordButton.getToggleState());
+  };
+  addAndMakeVisible(recordButton);
 
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
@@ -79,16 +62,35 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
     };
     addAndMakeVisible(stopButton);
 
-    recordButton.setButtonText(juce::String::fromUTF8("⏺Rec"));
-    recordButton.setClickingTogglesState(true);
-    recordButton.addShortcut(juce::KeyPress('r'));
-    recordButton.setTooltip("toggle real-time recording (r)");
-    recordButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
-                           juce::Colours::orangered);
-    recordButton.onClick = [this] {
-      processorRef.sequencer.setArmed(recordButton.getToggleState());
+    bpmLabel.setText("BPM: ", juce::NotificationType::dontSendNotification);
+    bpmLabel.attachToComponent(&bpmSlider, true);
+    bpmSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
+    bpmSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false, 40,
+                              STEP_BUTTON_HEIGHT);
+    bpmSlider.setRange(BPM_MIN, BPM_MAX, 1);
+    bpmSlider.setValue(BPM_DEFAULT);
+    bpmSlider.setDoubleClickReturnValue(true, BPM_DEFAULT);
+    bpmSlider.onValueChange = [this] {
+      processorRef.sequencer.setBpm(bpmSlider.getValue());
     };
-    addAndMakeVisible(recordButton);
+    addAndMakeVisible(bpmSlider);
+
+    keyboardMidiChannelLabel.setText(
+        "Keyboard trigger MIDI channel: ",
+        juce::NotificationType::dontSendNotification);
+    keyboardMidiChannelLabel.attachToComponent(&keyboardMidiChannelSlider,
+                                               true);
+    keyboardMidiChannelSlider.setSliderStyle(
+        juce::Slider::SliderStyle::IncDecButtons);
+    keyboardMidiChannelSlider.setTextBoxStyle(juce::Slider::TextBoxLeft, false,
+                                              30, STEP_BUTTON_HEIGHT);
+    keyboardMidiChannelSlider.setRange(1, 16, 1);
+    keyboardMidiChannelSlider.setValue(1);
+    keyboardMidiChannelSlider.onValueChange = [this] {
+      onScreenKeyboard.setMidiChannel(
+          (int)keyboardMidiChannelSlider.getValue());
+    };
+    addAndMakeVisible(keyboardMidiChannelSlider);
   }
 
   quantizeButton.setButtonText("Quantize");
@@ -185,14 +187,15 @@ void AudioPluginAudioProcessorEditor::resized() {
   auto utility_bar =
       bounds.removeFromBottom(STEP_BUTTON_HEIGHT + 20).reduced(10);
 
+  quantizeButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
+  utility_bar.removeFromLeft(10);
   recordButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
   playButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
   stopButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
-  quantizeButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
-  utility_bar.removeFromLeft(10);
+
   utility_bar.removeFromLeft(40);
   bpmSlider.setBounds(utility_bar.removeFromLeft(240));
   utility_bar.removeFromLeft(10);
