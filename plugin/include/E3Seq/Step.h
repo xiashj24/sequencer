@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEFAULT_NOTE 72  // C4
+#define DEFAULT_NOTE 60  // C4
 #define DISABLED_NOTE 20
 #define DEFAULT_VELOCITY 100  // 1..127 since 0 is the same as NoteOff
 #define DEFAULT_LENGTH 0.75f
