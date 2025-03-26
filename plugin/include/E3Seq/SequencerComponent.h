@@ -24,41 +24,29 @@ public:
                    {p, 9, ColourPalette[1]},
                    {p, 10, ColourPalette[2]},
                    {p, 11, ColourPalette[3]}} {
-    if (processorRef.wrapperType ==
-        juce::AudioProcessor::WrapperType::wrapperType_VST3) {
-      addAndMakeVisible(polyTracks[0]);
-    } else {
-      for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
-        addAndMakeVisible(monoTracks[i]);
-      }
-      for (int i = 0; i < STEP_SEQ_NUM_POLY_TRACKS; ++i) {
-        addAndMakeVisible(polyTracks[i]);
-      }
+    for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
+      addAndMakeVisible(monoTracks[i]);
+    }
+    for (int i = 0; i < STEP_SEQ_NUM_POLY_TRACKS; ++i) {
+      addAndMakeVisible(polyTracks[i]);
     }
 
     updateSize();
   }
 
   void resized() override final {
-    if (processorRef.wrapperType ==
-        juce::AudioProcessor::WrapperType::wrapperType_VST3) {
-      polyTracks[0].setBounds(0, 0, polyTracks[0].getWidth(),
-                              polyTracks[0].getHeight());
-
-    } else {
-      int lastX = 0, lastY = 0;
-      for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
-        monoTracks[i].setBounds(lastX, lastY, monoTracks[i].getWidth(),
-                                monoTracks[i].getHeight());
-        lastY += monoTracks[i].getHeight() + 10;
-      }
-      for (int i = 0; i < STEP_SEQ_NUM_POLY_TRACKS; ++i) {
-        polyTracks[i].setBounds(lastX, lastY, polyTracks[i].getWidth(),
-                                polyTracks[i].getHeight());
-        lastY += polyTracks[i].getHeight() + 10;
-      }
-      updateSize();
+    int lastX = 0, lastY = 0;
+    for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
+      monoTracks[i].setBounds(lastX, lastY, monoTracks[i].getWidth(),
+                              monoTracks[i].getHeight());
+      lastY += monoTracks[i].getHeight() + 10;
     }
+    for (int i = 0; i < STEP_SEQ_NUM_POLY_TRACKS; ++i) {
+      polyTracks[i].setBounds(lastX, lastY, polyTracks[i].getWidth(),
+                              polyTracks[i].getHeight());
+      lastY += polyTracks[i].getHeight() + 10;
+    }
+    updateSize();
   }
 
   void updateSize() {
@@ -74,7 +62,7 @@ public:
   }
 
 private:
-  AudioPluginAudioProcessor& processorRef;
+  [[maybe_unused]] AudioPluginAudioProcessor& processorRef;
   MonoTrackComponent monoTracks[STEP_SEQ_NUM_MONO_TRACKS];
   PolyTrackComponent polyTracks[STEP_SEQ_NUM_POLY_TRACKS];
 };
