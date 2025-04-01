@@ -47,6 +47,7 @@ private:
   juce::Viewport sequencerViewport;
   SequencerComponent sequencerEditor;
 
+  juce::TextButton smartButton;
   juce::TextButton recordButton;
   juce::TextButton playButton;
   juce::TextButton stopButton;

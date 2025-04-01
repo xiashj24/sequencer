@@ -66,6 +66,13 @@ public:
     }
   }
 
+  void setEnableSmartOverdub(bool should) {
+    for (auto& polytrack : polyTracks_)
+    {
+      polytrack.setEnableSmartOverdub(should);
+    }
+  }
+
   bool isRunning() const { return running_; }
   bool isArmed() const { return armed_; }
 

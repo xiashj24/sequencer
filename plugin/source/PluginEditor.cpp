@@ -30,6 +30,16 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
   };
   addAndMakeVisible(recordButton);
 
+  smartButton.setButtonText(juce::String::fromUTF8("Smart Overdub™"));
+  smartButton.setClickingTogglesState(true);
+  smartButton.setTooltip("toggle smart overdub (s)");
+  smartButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
+                         juce::Colours::orangered);
+  smartButton.onClick = [this] {
+    processorRef.sequencer.setEnableSmartOverdub(smartButton.getToggleState());
+  };
+  addAndMakeVisible(smartButton);
+
   if (processorRef.wrapperType ==
       juce::AudioProcessor::WrapperType::wrapperType_Standalone) {
     playButton.setButtonText(juce::String::fromUTF8("⏯Play"));
@@ -195,9 +205,11 @@ void AudioPluginAudioProcessorEditor::resized() {
   utility_bar.removeFromLeft(10);
   stopButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH));
   utility_bar.removeFromLeft(10);
+  smartButton.setBounds(utility_bar.removeFromLeft(STEP_BUTTON_WIDTH*2));
+  utility_bar.removeFromLeft(10);
 
   utility_bar.removeFromLeft(40);
-  bpmSlider.setBounds(utility_bar.removeFromLeft(240));
+  bpmSlider.setBounds(utility_bar.removeFromLeft(200));
   utility_bar.removeFromLeft(10);
 
   helpButton.setBounds(utility_bar.removeFromRight(STEP_BUTTON_HEIGHT));

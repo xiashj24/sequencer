@@ -18,8 +18,12 @@ public:
 
   void setStepAtIndex(int index, PolyStep step) { steps_[index] = step; }
 
+  void setEnableSmartOverdub(bool should) { smartOverdub = should; }
+
 private:
   PolyStep steps_[STEP_SEQ_MAX_LENGTH];
+
+  bool smartOverdub = false;
 
   int getStepRenderTick(int index) const override final {
     float offset_min = 0.0f;
@@ -36,14 +40,17 @@ private:
     if (step.enabled) {
       // note stealing here
       // its behaviour should not be affected by probability
-      if (keyboardRef.getActiveChannel() == this->getChannel()) {
-        auto active_notes = keyboardRef.getActiveNotes(POLYPHONY);
-        for (int note : active_notes) {
-          step.stealNote(note);
-        }
-      }
+
       // However, the correct approach is probably note-wise stealing
       // i.e. each note should decide on its own
+      if (smartOverdub) {
+        if (keyboardRef.getActiveChannel() == this->getChannel()) {
+          auto active_notes = keyboardRef.getActiveNotes(POLYPHONY);
+          for (int note : active_notes) {
+            step.stealNote(note);
+          }
+        }
+      }
 
       // probability check
       if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {

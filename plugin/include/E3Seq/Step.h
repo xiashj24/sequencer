@@ -1,5 +1,6 @@
 #pragma once
-#include <cmath>
+#include <cmath>      // std::abs
+#include <algorithm>  // std::sort
 
 #define DEFAULT_NOTE 60  // C4
 #define DISABLED_NOTE 20
@@ -52,6 +53,11 @@ struct PolyStep {
     notes[0].number = DEFAULT_NOTE;
   }
 
+  void sort() {
+    std::sort(&notes[0], &notes[POLYPHONY],
+              [](const Note& a, const Note& b) { return a.number > b.number; });
+  }
+
   void align(int velocity = DEFAULT_VELOCITY,
              float offset = 0.f,
              float length = DEFAULT_LENGTH) {
@@ -85,6 +91,8 @@ struct PolyStep {
         note.number = STOLEN_NOTE;
         if (isEmpty()) {
           reset();
+        } else {
+          sort();
         }
         return;
       }
@@ -95,6 +103,8 @@ struct PolyStep {
         note.number = STOLEN_NOTE;
         if (isEmpty()) {
           reset();
+        } else {
+          sort();
         }
         return;
       }
@@ -114,6 +124,8 @@ struct PolyStep {
 
     if (isEmpty()) {
       reset();
+    } else {
+      sort();
     }
   }
 
@@ -137,6 +149,7 @@ struct PolyStep {
     for (auto& note : notes) {
       if (note.number <= DISABLED_NOTE) {
         note = new_note;
+        sort();
         return;
       }
     }
@@ -152,6 +165,7 @@ struct PolyStep {
     }
 
     notes[closest_index] = new_note;
+    // no need to sort in this case?
   }
 
   PolyStep() { reset(); }
