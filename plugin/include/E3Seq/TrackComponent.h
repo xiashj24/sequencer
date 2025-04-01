@@ -18,7 +18,7 @@ public:
                      int trackIndex,
                      juce::Colour trackColor)
       : processorRef(p),
-        trackRef(p.sequencer.getTrack(trackIndex)),
+        trackRef(p.sequencer.getMonoTrack(trackIndex)),
         trackIndex_(trackIndex) {
     startTimer(10);
 
@@ -269,14 +269,14 @@ private:
       alternateAttachments[STEP_SEQ_DEFAULT_LENGTH];
 };
 
-// MARK: polyphonic
+// MARK: poly track
 class PolyTrackComponent : public juce::Component, private juce::Timer {
 public:
   PolyTrackComponent(AudioPluginAudioProcessor& p,
                      int trackIndex,
                      juce::Colour trackColor)
       : processorRef(p),
-        trackRef(p.sequencer.getTrack(trackIndex)),
+        trackRef(p.sequencer.getPolyTrack(trackIndex-STEP_SEQ_NUM_MONO_TRACKS)),
         trackIndex_(trackIndex) {
     startTimer(10);
 

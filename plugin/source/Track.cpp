@@ -10,7 +10,7 @@ int Track::getCurrentStepIndex() const {
 }
 
 void Track::renderNote(int index, Note note) {
-  if (note.number <= 20)
+  if (note.number <= DISABLED_NOTE)
     return;
 
   int note_on_tick = static_cast<int>((index + note.offset) * TICKS_PER_STEP);
@@ -18,7 +18,6 @@ void Track::renderNote(int index, Note note) {
       static_cast<int>((index + note.offset + note.length) * TICKS_PER_STEP);
 
   // force note off before the next note on of the same note
-
   // search all midi messages after note_on_tick
   // if there is a note off with the same note number
   // delete that and insert a new note off at note_on_tick
@@ -86,8 +85,7 @@ void Track::tick() {
   if (this->enabled_) {
     int index = getCurrentStepIndex();
 
-    // render the step just right before its note on time
-    // render it even earlier should be fine but
+    // render the step just right before it's too late
     if (tick_ == getStepRenderTick(index)) {
       renderStep(index);
     }
@@ -95,8 +93,15 @@ void Track::tick() {
     // send current tick's MIDI events
     for (int i = firstRun_.getNextIndexAtTime(tick_);
          i < firstRun_.getNextIndexAtTime(tick_ + 1); ++i) {
-      auto midi_event = firstRun_.getEventPointer(i);
-      sendMidiMessage(midi_event->message);
+      auto message = firstRun_.getEventPointer(i)->message;
+
+      // do not note off if held by the keyboard
+      if (message.isNoteOff() &&
+          keyboardRef.isNoteOn(message.getNoteNumber())) {
+        continue;
+      }
+
+      sendMidiMessage(message);
     }
   }
 

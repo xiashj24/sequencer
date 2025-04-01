@@ -9,6 +9,7 @@
 #pragma once
 #include "E3Seq/MonoTrack.h"
 #include "E3Seq/PolyTrack.h"
+#include "E3Seq/KeyboardMonitor.h"
 #include <juce_audio_devices/juce_audio_devices.h>  // juce::MidiMessageCollector
 
 // TODO: Doxygen documentation
@@ -73,11 +74,11 @@ public:
   void handleNoteOn(juce::MidiMessage noteOn);
   void handleNoteOff(juce::MidiMessage noteOff);
 
-  Track& getTrack(int index) {
-    if (index < STEP_SEQ_NUM_MONO_TRACKS) {
-      return getMonoTrack(index);
+  Track& getTrackByChannel(int channel) {
+    if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
+      return getMonoTrack(channel - 1);
     } else {
-      return getPolyTrack(index - STEP_SEQ_NUM_MONO_TRACKS);
+      return getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS);
     }
   }
 
@@ -118,12 +119,9 @@ private:
   Note calculateNoteFromNoteOnAndOff(juce::MidiMessage noteOn,
                                      juce::MidiMessage noteOff);
 
-  std::pair<juce::MidiMessage,
-            int>
-      lastNoteOn_[128];  // (noteOn, step_index), where
-                         // step_index == -1 indicate no message
+  KeyboardMonitor keyboardMonitor_;
 
-  // std::optional<juce::MidiMessage> lastNoteOn_[STEP_SEQ_MAX_LENGTH];
+  // std::optional<juce::MidiMessage> keyState_[STEP_SEQ_MAX_LENGTH];
   juce::MidiMessageCollector& midiCollector_;
 };
 

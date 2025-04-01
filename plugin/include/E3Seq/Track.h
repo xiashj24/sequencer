@@ -1,5 +1,6 @@
 #pragma once
 #include "E3Seq/Step.h"
+#include "E3Seq/KeyboardMonitor.h"
 #include <juce_audio_basics/juce_audio_basics.h>  // juce::MidiMessageSequence
 
 /*
@@ -36,9 +37,11 @@ public:
   };  // unused now
 
   Track(int channel,
+        const KeyboardMonitor& keyboard,
         int length = STEP_SEQ_DEFAULT_LENGTH,
         PlayMode mode = PlayMode::Forward)
-      : channel_(channel),
+      : keyboardRef(keyboard),
+        channel_(channel),
         trackLength_(length),
         playMode_(mode),
         enabled_(true),
@@ -81,6 +84,9 @@ protected:
 
   // timestamp in ticks (not seconds or samples)
   void renderMidiMessage(juce::MidiMessage message);
+
+  // for note stealing
+  const KeyboardMonitor& keyboardRef;
 
   static constexpr int HALF_STEP_TICKS = TICKS_PER_STEP / 2;
 

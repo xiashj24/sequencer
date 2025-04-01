@@ -1,20 +1,21 @@
 #include "E3Seq/Step.h"
 #include "E3Seq/Track.h"
+#include "E3Seq/KeyboardMonitor.h"
 
-// does it even make sense to have a play mode for polytrack? should test and
-// decide
+// this class serve as a data management layer between the core sequencer logic
+// (Track.cpp) and global sequencer state (E3Sequencer)
 
 namespace Sequencer {
 class PolyTrack : public Track {
 public:
-  PolyTrack(int channel, int length = STEP_SEQ_DEFAULT_LENGTH)
-      : Track(channel, length) {}
+  PolyTrack(int channel,
+            const KeyboardMonitor& keyboard,
+            int length = STEP_SEQ_DEFAULT_LENGTH)
+      : Track(channel, keyboard, length) {}
 
   // note: there is some code duplication but I can't think of a better way
   PolyStep getStepAtIndex(int index) const { return steps_[index]; }
 
-  // side note: for embedded, it makes sense to begin a new transaction of undo
-  // manager whenever stepStepAtIndex is called
   void setStepAtIndex(int index, PolyStep step) { steps_[index] = step; }
 
 private:
@@ -28,13 +29,27 @@ private:
     return static_cast<int>((index + offset_min) * TICKS_PER_STEP);
   }
 
+  // TODO: rework this such that each note is rendered at their respective note
+  // on timing
   void renderStep(int index) override final {
     auto& step = steps_[index];
     if (step.enabled) {
+      // note stealing here
+      // its behaviour should not be affected by probability
+      if (keyboardRef.getActiveChannel() == this->getChannel()) {
+        auto active_notes = keyboardRef.getActiveNotes(POLYPHONY);
+        for (int note : active_notes) {
+          step.stealNote(note);
+        }
+      }
+      // However, the correct approach is probably note-wise stealing
+      // i.e. each note should decide on its own
+
       // probability check
       if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {
         return;
       }
+
       // render all notes in the step
       for (int j = 0; j < POLYPHONY; ++j) {
         // render note

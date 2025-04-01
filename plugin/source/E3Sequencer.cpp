@@ -9,8 +9,14 @@
 namespace Sequencer {
 
 E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
-    : monoTracks_{1, 2, 3, 4, 5, 6, 7, 8},
-      polyTracks_{9, 10, 11, 12},  // will this work?
+    : monoTracks_{{1, keyboardMonitor_}, {2, keyboardMonitor_},
+                  {3, keyboardMonitor_}, {4, keyboardMonitor_},
+                  {5, keyboardMonitor_}, {6, keyboardMonitor_},
+                  {7, keyboardMonitor_}, {8, keyboardMonitor_}},
+      polyTracks_{{9, keyboardMonitor_},
+                  {10, keyboardMonitor_},
+                  {11, keyboardMonitor_},
+                  {12, keyboardMonitor_}},
       bpm_(bpm),
       running_(false),
       armed_(false),
@@ -19,8 +25,8 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       startTime_(0.0),
       midiCollector_(midiCollector) {
   // MARK: track config
-  for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
-    Track& track = getTrack(index);
+  for (int channel = 1; channel <= STEP_SEQ_NUM_TRACKS; ++channel) {
+    Track& track = getTrackByChannel(channel);
     track.sendMidiMessage = [this](juce::MidiMessage msg) {
       // time translation
       int tick = (int)msg.getTimeStamp();
@@ -29,10 +35,6 @@ E3Sequencer::E3Sequencer(juce::MidiMessageCollector& midiCollector, double bpm)
       this->midiCollector_.addMessageToQueue(
           msg.withTimeStamp(real_time_stamp));
     };
-  }
-
-  for (int i = 0; i < 128; ++i) {
-    lastNoteOn_[i].second = -1;
   }
 }
 
@@ -45,8 +47,22 @@ void E3Sequencer::process(double deltaTime) {
   double one_tick_time = getOneTickTime();
 
   if (timeSinceStart_ >= one_tick_time) {
-    for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
-      getTrack(index).tick();
+    for (int channel = 1; channel <= STEP_SEQ_NUM_TRACKS; ++channel) {
+      int step_index = getTrackByChannel(channel).getCurrentStepIndex();
+
+      getTrackByChannel(channel).tick();
+
+      // in case there is a note stealing
+      if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
+        notifyProcessorMonoStepUpdate(
+            channel - 1, step_index,
+            getMonoTrack(channel - 1).getStepAtIndex(step_index));
+      } else {
+        notifyProcessorPolyStepUpdate(
+            channel - 1 - STEP_SEQ_NUM_MONO_TRACKS, step_index,
+            getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
+                .getStepAtIndex(step_index));
+      }
     }
     timeSinceStart_ -= one_tick_time;
   }
@@ -58,23 +74,8 @@ void E3Sequencer::start(double startTime) {
   running_ = true;
   timeSinceStart_ = 0.0;
   startTime_ = startTime;
-  for (int index = 0; index < STEP_SEQ_NUM_TRACKS; ++index) {
-    getTrack(index).returnToStart();
-  }
-}
-
-// TODO: test edge case
-// what will hanppen when hold a note for more than one bar???
-void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
-  if (noteOn.getChannel() > STEP_SEQ_NUM_TRACKS)
-    return;
-
-  if (this->isArmed() && this->isRunning()) {
-    int note = noteOn.getNoteNumber();
-    int channel = noteOn.getChannel();
-    int step_index = getTrack(channel).getCurrentStepIndex();
-
-    lastNoteOn_[note] = {noteOn, step_index};
+  for (int channel = 1; channel < STEP_SEQ_NUM_TRACKS; ++channel) {
+    getTrackByChannel(channel).returnToStart();
   }
 }
 
@@ -95,7 +96,8 @@ Note E3Sequencer::calculateNoteFromNoteOnAndOff(juce::MidiMessage noteOn,
 
   auto length =
       (noteOff.getTimeStamp() - noteOn.getTimeStamp()) / getOneStepTime();
-  length = std::min(length, static_cast<double>(STEP_SEQ_MAX_LENGTH));
+  length = std::min(
+      length, static_cast<double>(STEP_SEQ_MAX_LENGTH));  // clip to loop length
 
   return {.number = note_number,
           .velocity = velocity,
@@ -103,55 +105,61 @@ Note E3Sequencer::calculateNoteFromNoteOnAndOff(juce::MidiMessage noteOn,
           .length = static_cast<float>(length)};
 }
 
+void E3Sequencer::handleNoteOn(juce::MidiMessage noteOn) {
+  if (noteOn.getChannel() > STEP_SEQ_NUM_TRACKS)
+    return;
+
+  int channel = noteOn.getChannel();
+  int step_index = getTrackByChannel(channel).getCurrentStepIndex();
+
+  keyboardMonitor_.processNoteOn(noteOn, step_index);
+}
+
 // TODO: this function is getting too big, consider refactoring
 void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
   int note_number = noteOff.getNoteNumber();
   int channel = noteOff.getChannel();
 
+  // ignore Midi channel > 12
   if (channel > STEP_SEQ_NUM_TRACKS)
     return;
 
-  if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
-    // live rec for mono tracks
-    int step_index = lastNoteOn_[note_number].second;
-    if (step_index >= 0) {
-      auto noteOn = lastNoteOn_[note_number].first;
-      if (noteOn.getNoteNumber() == note_number &&
-          noteOn.getChannel() == channel) {
-        auto Note = calculateNoteFromNoteOnAndOff(noteOn, noteOff);
+  juce::MidiMessage note_on;
+  int step_index;
 
-        MonoStep step{.enabled = true, .note = Note};
-        // getMonoTrack(channel - 1).setStepAtIndex(index, step); // no need
-        // notify AudioProcessor about parameter update
-        notifyProcessorMonoStepUpdate(channel - 1, step_index, step);
-        lastNoteOn_[note_number].second = -1;
+  if (keyboardMonitor_.getNoteOn(note_number, note_on, step_index)) {
+    if (note_on.getChannel() == channel) {
+      keyboardMonitor_.processNoteOff(noteOff);
+      // overdub
+      if (this->isArmed() && this->isRunning()) {
+        auto new_note = calculateNoteFromNoteOnAndOff(note_on, noteOff);
+
+        if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
+          // for mono tracks
+          MonoStep step{.enabled = true, .note = new_note};
+          // no need to call this for JUCE
+          // getMonoTrack(channel - 1).setStepAtIndex(index, step);
+          notifyProcessorMonoStepUpdate(channel - 1, step_index, step);
+        } else {
+          // for poly tracks
+          PolyStep step = getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
+                              .getStepAtIndex(step_index);
+          step.addNote(new_note);
+          // this call is redundant for JUCE
+          // getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
+          //     .setStepAtIndex(step_index, step);
+
+          // notify AudioProcessor about parameter change
+          notifyProcessorPolyStepUpdate(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS,
+                                        step_index, step);
+        }
       }
     }
+    // else channel has been changed in the middle of a note
   } else {
-    // live rec for poly tracks
-    int step_index = lastNoteOn_[note_number].second;
-
-    if (step_index >= 0) {
-      auto noteOn = lastNoteOn_[note_number].first;
-      if (noteOn.getNoteNumber() == note_number &&
-          noteOn.getChannel() == channel) {
-        // calculate offset and length
-
-        auto note = calculateNoteFromNoteOnAndOff(noteOn, noteOff);
-
-        PolyStep step = getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
-                            .getStepAtIndex(step_index);
-        step.addNote(note);
-        // just to update note_index, TODO: make it clearer?
-        getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
-            .setStepAtIndex(step_index, step);
-
-        // notify AudioProcessor about parameter change
-        notifyProcessorPolyStepUpdate(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS,
-                                      step_index, step);
-        lastNoteOn_[note_number].second = -1;
-      }
-    }
+#ifdef JUCE_DEBUG
+    jassertfalse;  // note on and note off mismatch!
+#endif
   }
 }
 }  // namespace Sequencer

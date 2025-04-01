@@ -11,9 +11,10 @@ namespace Sequencer {
 class MonoTrack : public Track {
 public:
   MonoTrack(int channel,
+            const KeyboardMonitor& keyboard,
             int length = STEP_SEQ_DEFAULT_LENGTH,
             PlayMode mode = PlayMode::Forward)
-      : Track(channel, length, mode) {}
+      : Track(channel, keyboard, length, mode) {}
 
   // sequencer programmer interface
   void setStepAtIndex(int index,
@@ -67,6 +68,10 @@ private:
       int note_off_tick = getStepNoteOffTick(index);
 
       // force note off before the next active step
+      // TODO: this still doesn't feel like the right thing to do
+      // maybe it makes more sense to reconsider this code from the perspective
+      // of polytrack note stealing behaviour
+      // i.e make the code for mono & poly tracks more unified
       int next_active_step_index = (index + 1) % getLength();
       while (!getStepAtIndex(next_active_step_index).enabled) {
         next_active_step_index = (next_active_step_index + 1) % getLength();
