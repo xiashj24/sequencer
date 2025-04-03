@@ -52,6 +52,11 @@ private:
         }
       }
 
+      // in case note stealing disables the step
+      if (!step.enabled) {
+        return;
+      }
+
       // probability check
       if (juce::Random::getSystemRandom().nextFloat() >= step.probability) {
         return;
