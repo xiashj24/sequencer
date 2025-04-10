@@ -32,7 +32,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(
 
   smartButton.setButtonText(juce::String::fromUTF8("Smart Overdub™"));
   smartButton.setClickingTogglesState(true);
-  smartButton.setTooltip("toggle smart overdub (s)");
+  smartButton.setTooltip("toggle smart overdub");
   smartButton.setColour(juce::TextButton::ColourIds::buttonOnColourId,
                          juce::Colours::orangered);
   smartButton.onClick = [this] {
