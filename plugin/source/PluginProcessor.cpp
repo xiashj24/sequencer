@@ -1,7 +1,8 @@
 #include "E3Seq/PluginProcessor.h"
 #include "E3Seq/PluginEditor.h"
 
-#define TIMER_INTERVAL_MS 1
+#define HIRES_TIMER_INTERVAL_MS 1
+#define TIMER_INTERVAL_MS 10
 
 namespace audio_plugin {
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
@@ -140,7 +141,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
           p->setValueNotifyingHost(p->convertTo0to1(step.notes[i].length));
         }
       };
-  startTimer(TIMER_INTERVAL_MS);
+  HighResolutionTimer::startTimer(HIRES_TIMER_INTERVAL_MS);
+  Timer::startTimer(TIMER_INTERVAL_MS);
 }
 
 const juce::String OffsetText[] = {
@@ -276,11 +278,8 @@ AudioPluginAudioProcessor::createParameterLayout() {
   return layout;
 }
 
-void AudioPluginAudioProcessor::hiResTimerCallback() {
-  // MARK: seq logic
-  constexpr double deltaTime = TIMER_INTERVAL_MS / (double)1000;
-
-  // retrieve sequencer parameters from APVTS
+void AudioPluginAudioProcessor::timerCallback() {
+  // apply sequencer parameter changes from GUI update
   for (int i = 0; i < STEP_SEQ_NUM_MONO_TRACKS; ++i) {
     for (int j = 0; j < STEP_SEQ_MAX_LENGTH; ++j) {
       Sequencer::MonoStep step{
@@ -314,7 +313,11 @@ void AudioPluginAudioProcessor::hiResTimerCallback() {
       sequencer.getPolyTrack(i).setStepAtIndex(j, step);
     }
   }
+}
 
+void AudioPluginAudioProcessor::hiResTimerCallback() {
+  // MARK: seq logic
+  constexpr double deltaTime = HIRES_TIMER_INTERVAL_MS / (double)1000;
   sequencer.process(deltaTime);
 }
 
@@ -327,7 +330,8 @@ void AudioPluginAudioProcessor::panic() {
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor() {
-  stopTimer();
+  Timer::stopTimer();
+  HighResolutionTimer::stopTimer();
 }
 
 const juce::String AudioPluginAudioProcessor::getName() const {

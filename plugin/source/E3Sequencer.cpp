@@ -137,17 +137,23 @@ void E3Sequencer::handleNoteOff(juce::MidiMessage noteOff) {
         if (channel <= STEP_SEQ_NUM_MONO_TRACKS) {
           // for mono tracks
           MonoStep step{.enabled = true, .note = new_note};
-          // no need to call this for JUCE
-          // getMonoTrack(channel - 1).setStepAtIndex(index, step);
+          // same as below
+          getMonoTrack(channel - 1).setStepAtIndex(step_index, step);
           notifyProcessorMonoStepUpdate(channel - 1, step_index, step);
         } else {
           // for poly tracks
           PolyStep step = getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
                               .getStepAtIndex(step_index);
           step.addNote(new_note);
-          // this call is redundant for JUCE
-          // getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
-          //     .setStepAtIndex(step_index, step);
+          // this call is essential to avoid syncronization issues between audio
+          // and hires timer
+          getPolyTrack(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS)
+              .setStepAtIndex(step_index, step);
+
+          // important note:
+          // it might make sense to set up some mechanism to pass information
+          // from audio thread (this function) to hi-res timer (sequencer logic
+          // thread)
 
           // notify AudioProcessor about parameter change
           notifyProcessorPolyStepUpdate(channel - 1 - STEP_SEQ_NUM_MONO_TRACKS,

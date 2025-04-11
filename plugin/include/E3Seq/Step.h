@@ -147,7 +147,7 @@ struct PolyStep {
     }
 
     for (auto& note : notes) {
-      if (note.number <= DISABLED_NOTE) {
+      if (note.number <= DISABLED_NOTE) {  // disabled or stolen
         note = new_note;
         sort();
         return;

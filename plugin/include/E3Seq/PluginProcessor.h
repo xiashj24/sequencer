@@ -7,7 +7,7 @@
 
 namespace audio_plugin {
 class AudioPluginAudioProcessor : public juce::AudioProcessor, 
-                                  private juce::HighResolutionTimer {
+                                  private juce::HighResolutionTimer, private juce::Timer {
 public:
   AudioPluginAudioProcessor();
   ~AudioPluginAudioProcessor() override;
@@ -25,7 +25,9 @@ public:
 
   const juce::String getName() const override;
 
-  virtual void hiResTimerCallback() override final;
+  void hiResTimerCallback() override final;
+
+  void timerCallback() override final;
 
   bool acceptsMidi() const override;
   bool producesMidi() const override;
